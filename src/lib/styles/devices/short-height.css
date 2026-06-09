@@ -1,0 +1,17 @@
+/* Low-Height & Small Laptop Screens Tuning */
+
+@media (max-height: 720px) and (min-width: 1024px) {
+  #desktop-3-column-layout #chess-board-wrapper {
+    max-height: calc(100vh - 170px) !important;
+  }
+
+  /* Shrink the auxiliary moves list in height to secure room */
+  #desktop-3-column-layout .h-\[240px\] {
+    height: 180px !important;
+  }
+
+  #side-panel-content, #candidate-move-list {
+    max-height: 100% !important;
+    overflow-y: auto !important;
+  }
+}

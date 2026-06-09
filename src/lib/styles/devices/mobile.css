@@ -1,0 +1,48 @@
+/* Mobile Vertical Layout Styles (Mobile Portrait & Smaller screens) */
+
+@media (max-width: 767px) {
+  /* Ensure full container flow without overflow bugs */
+  #mobile-single-flow-layout {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-item-gap);
+    padding-bottom: 2rem;
+  }
+
+  /* Force Board dimensions to scale responsively based on viewport width */
+  #mobile-single-flow-layout #chess-board-wrapper {
+    width: 100% !important;
+    max-width: min(calc(100vw - 2.5rem), 400px) !important;
+    aspect-ratio: 1 / 1;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  /* Order layout adjustments for sequential mobile flow */
+  #mobile-board-toolbar {
+    order: 1;
+  }
+
+  #mobile-single-flow-layout div:has(> #chess-board-wrapper) {
+    order: 2;
+  }
+
+  #move-history-strip {
+    order: 3;
+    margin-top: 0.25rem;
+  }
+
+  /* Candidate and lists grouping in order */
+  #mobile-single-flow-layout .grid {
+    order: 4;
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-card-gap);
+  }
+
+  #bottom-panel-container {
+    order: 5;
+    margin-top: 0.5rem;
+    min-height: 320px;
+  }
+}

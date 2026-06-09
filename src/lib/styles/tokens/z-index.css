@@ -1,0 +1,13 @@
+:root {
+  --z-board-coords: 10;
+  --z-board-piece: 20;
+  --z-board-interactive: 30;
+  --z-panel-header: 40;
+  
+  /* Overlays, Navigations & Modals */
+  --z-navigation-header: 50;
+  --z-drawer-overlay: 90;
+  --z-modal-overlay: 100;
+  --z-modal-content: 110;
+  --z-tooltip: 120;
+}

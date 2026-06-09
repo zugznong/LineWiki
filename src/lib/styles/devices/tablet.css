@@ -1,0 +1,32 @@
+/* Tablet / iPad Portrait Medium Layout Adjustments */
+
+@media (min-width: 768px) and (max-width: 1023px) {
+  #mobile-single-flow-layout {
+    gap: var(--spacing-card-gap);
+    max-width: 680px;
+    margin-left: auto;
+    margin-right: auto;
+    padding: 0.5rem;
+  }
+
+  /* Force highly polished responsive dimensions on table layout */
+  #chess-board-wrapper {
+    max-width: 520px !important;
+    width: 100% !important;
+    aspect-ratio: 1 / 1;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  /* Adaptive bento-grid double columns for medium size screens */
+  #mobile-single-flow-layout .grid {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 1.25rem !important;
+  }
+
+  #bottom-panel-container {
+    min-height: 380px !important;
+    margin-top: 1rem;
+  }
+}

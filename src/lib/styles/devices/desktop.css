@@ -1,0 +1,28 @@
+/* Standard Desktop Triple-Column Grid System Setup */
+
+@media (min-width: 1024px) {
+  #desktop-3-column-layout {
+    display: grid !important;
+    grid-template-columns: 1fr 320px 385px;
+    gap: 1.25rem;
+    align-items: stretch;
+    height: 100%;
+    min-height: 0;
+  }
+
+  /* Chessboard wrapper fluid calculations */
+  #desktop-3-column-layout #chess-board-wrapper {
+    aspect-ratio: 1 / 1;
+    max-height: calc(100vh - 200px);
+    width: auto !important;
+    height: auto !important;
+    min-height: 280px;
+  }
+
+  #desktop-side-panel-col {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: 0;
+  }
+}

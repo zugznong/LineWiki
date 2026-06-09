@@ -1,0 +1,4 @@
+{
+  "name": "LineWiki",
+  "description": "FEN 하나로 체스 포지션 페이지를 열고 로컬 Stockfish 분석을 확인할 수 있는 체스 라인 연구 도구"
+}

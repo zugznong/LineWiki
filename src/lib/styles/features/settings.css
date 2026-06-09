@@ -1,0 +1,53 @@
+/* Board themes preview indicators & piece selections */
+
+.theme-preset-card {
+  cursor: pointer;
+  border: 1.5px solid var(--color-border-primary);
+  border-radius: var(--radius-card);
+  transition: all 180ms cubic-bezier(0.16, 1, 0.3, 1);
+  background-color: rgba(15, 23, 42, 0.35);
+}
+
+.theme-preset-card:hover {
+  border-color: var(--color-border-secondary);
+}
+
+.theme-preset-card.active {
+  border-color: var(--color-accent);
+  background-color: rgba(16, 185, 129, 0.05);
+  box-shadow: 0 0 12px rgba(16, 185, 129, 0.04);
+}
+
+/* Coming soon inline cards roadmap line info */
+.coming-soon-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.15rem 0.45rem;
+  font-family: var(--font-body);
+  font-size: 9px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  background-color: rgba(245, 158, 11, 0.1);
+  color: var(--color-status-warning);
+  border-radius: 4px;
+}
+
+/* Custom mini decorative components preview layout */
+#board-theme-preview {
+  background-color: rgba(2, 6, 17, 0.45);
+  border-radius: var(--radius-card);
+  border: 1px solid var(--color-border-primary);
+  transition: border-color 155s;
+}
+
+#board-theme-preview:hover {
+  border-color: var(--color-border-secondary);
+}
+
+#piece-style-preview {
+  background-color: rgba(2, 6, 17, 0.45);
+  border-radius: var(--radius-card);
+  border: 1px solid var(--color-border-primary);
+}

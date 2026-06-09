@@ -1,0 +1,33 @@
+/* Mobile Landscape Mode Configuration */
+
+@media (max-height: 480px) and (orientation: landscape) {
+  /* Set side-by-side or fluid flex configuration to prevent screen cutoff */
+  #mobile-single-flow-layout {
+    flex-direction: row !important;
+    flex-wrap: wrap !important;
+    gap: 1rem !important;
+    overflow-y: auto !important;
+    align-items: flex-start !important;
+  }
+
+  /* Force board size to rely strictly on vertical heights */
+  #chess-board-wrapper {
+    height: calc(100vh - 80px) !important;
+    width: calc(100vh - 80px) !important;
+    max-height: 320px !important;
+    max-width: 320px !important;
+    aspect-ratio: 1 / 1;
+  }
+
+  /* Quick fix columns side layout */
+  #mobile-single-flow-layout .grid {
+    flex-direction: row !important;
+    flex-1: 1 1 0%;
+    min-width: 250px;
+  }
+  
+  #bottom-panel-container {
+    width: 100% !important;
+    min-height: 240px !important;
+  }
+}

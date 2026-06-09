@@ -1,0 +1,20 @@
+:root {
+  /* Fonts Family */
+  --font-display: "Space Grotesk", system-ui, -apple-system, sans-serif;
+  --font-mono: "JetBrains Mono", monospace;
+  --font-body: system-ui, -apple-system, sans-serif;
+  --font-serif: Georgia, Cambria, "Times New Roman", Times, serif;
+
+  /* Font Sizes */
+  --font-size-title-lg: 1.5rem;   /* 24px */
+  --font-size-title-md: 1.25rem;  /* 20px */
+  --font-size-title-sm: 1rem;     /* 16px */
+  --font-size-body-reg: 0.875rem; /* 14px */
+  --font-size-body-sm: 0.75rem;   /* 12px */
+  --font-size-caption: 0.625rem;  /* 10px */
+  
+  /* Chess Piece Typography scale */
+  --font-size-piece-desktop: 3rem;  /* 48px */
+  --font-size-piece-tablet: 2.5rem;  /* 40px */
+  --font-size-piece-mobile: 2.25rem; /* 36px */
+}

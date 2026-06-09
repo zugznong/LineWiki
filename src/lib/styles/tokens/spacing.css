@@ -1,0 +1,17 @@
+:root {
+  /* Page & Layout Padding */
+  --spacing-page-padding-desktop: 1.25rem; /* 20px */
+  --spacing-page-padding-mobile: 0.75rem;  /* 12px */
+
+  /* Chess Board Layout */
+  --spacing-board-padding: 1rem;
+  --spacing-board-outer-margin: 1.5rem;
+  --spacing-board-coord-offset: 1.5rem;
+
+  /* Component Spacings */
+  --spacing-card-gap: 1rem;
+  --spacing-item-gap: 0.75rem;
+  --spacing-panel-padding: 1.25rem;
+  --spacing-container-max: 80rem; /* 1280px */
+  --spacing-panel-width: 24rem; /* 384px */
+}

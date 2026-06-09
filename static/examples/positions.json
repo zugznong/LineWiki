@@ -1,0 +1,26 @@
+[
+  {
+    "name": "Starting Position (기본 시작 포지션)",
+    "fen": "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+  },
+  {
+    "name": "Ruy Lopez - Closed Defense (루이 로페즈 - 닫힌 방어)",
+    "fen": "r1bqk2r/1ppp1ppp/2n2n2/1b2p3/4P3/5N2/PPPPBPPP/RNBQ1RK1 w kq - 0 6"
+  },
+  {
+    "name": "Sicilian Defense - Najdorf (시실리안 나이도프 카운터)",
+    "fen": "rnbqkb1r/1p2pppp/p2p1n2/8/3NP3/2N5/PPP2PPP/R1BQKB1R w KQkq - 0 6"
+  },
+  {
+    "name": "Queen's Gambit Declined (마샬 트랩 등 반격선)",
+    "fen": "rnbqkbnr/ppp2ppp/4p3/3p4/2PP4/8/PP2PPPP/RNBQKBNR w KQkq - 0 3"
+  },
+  {
+    "name": "Scholar's Mate Threat (학자의 메이트 위협 포지션)",
+    "fen": "r1bqkbnr/pppp1ppp/2n5/4p3/2B1P3/5Q2/PPPP1PPP/RNB1K1NR b KQkq - 0 3"
+  },
+  {
+    "name": "Endgame Study (기물 우세 엔드게임 연구)",
+    "fen": "k7/P7/1K6/8/8/8/8/8 b - - 0 1"
+  }
+]

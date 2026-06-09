@@ -1,0 +1,95 @@
+/* Start Page Styles (시작 화면 스타일 모음) */
+
+.start-page-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: var(--spacing-page-padding-mobile);
+  background-color: var(--color-bg-base);
+  font-family: var(--font-body);
+}
+
+@media (min-width: 768px) {
+  .start-page-container {
+    padding: var(--spacing-page-padding-desktop);
+  }
+}
+
+.start-page-hero {
+  background: radial-gradient(circle at top, rgba(16, 185, 129, 0.08) 0%, transparent 60%);
+  width: 100%;
+  max-width: 540px;
+  text-align: center;
+  border-radius: var(--radius-panel);
+  border: 1px solid var(--color-border-primary);
+  background-color: rgba(15, 23, 42, 0.4); /* slate-900/40 */
+  backdrop-filter: blur(12px);
+  padding: 2rem 1.5rem;
+  box-shadow: 0 10px 30px -10px rgba(0,0,0,0.7);
+}
+
+.start-page-logo {
+  font-family: var(--font-display);
+  font-size: var(--font-size-title-lg);
+  font-weight: 800;
+  letter-spacing: -0.025em;
+  color: var(--color-text-primary);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.start-page-description {
+  font-size: var(--font-size-body-reg);
+  color: var(--color-text-secondary);
+  line-height: 1.6;
+  max-width: 440px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.fen-input-card {
+  width: 100%;
+  margin-top: 1.5rem;
+  background-color: rgba(2, 6, 17, 0.6); /* slate-950/60 */
+  border: 1px solid var(--color-border-secondary);
+  border-radius: var(--radius-card);
+  padding: 1.25rem;
+  text-align: left;
+}
+
+.example-positions-grid {
+  display: grid;
+  grid-template-columns: repeat(1, minmax(0, 1fr));
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+@media (min-width: 480px) {
+  .example-positions-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.example-pos-btn {
+  background-color: rgba(30, 41, 59, 0.3); /* slate-800/30 */
+  border: 1px solid var(--color-border-primary);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-body-sm);
+  font-weight: 600;
+  border-radius: var(--radius-button);
+  padding: 0.625rem 0.75rem;
+  cursor: pointer;
+  transition: all 150ms ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.example-pos-btn:hover {
+  background-color: rgba(16, 185, 129, 0.1);
+  border-color: var(--color-accent);
+  color: var(--color-text-primary);
+}

@@ -1,0 +1,49 @@
+@import "tailwindcss";
+
+/* 1. Design Tokens and variables */
+@import "./tokens/colors.css";
+@import "./tokens/spacing.css";
+@import "./tokens/typography.css";
+@import "./tokens/radius.css";
+@import "./tokens/z-index.css";
+
+/* 2. Device responsive templates */
+@import "./devices/mobile.css";
+@import "./devices/mobile-landscape.css";
+@import "./devices/tablet.css";
+@import "./devices/desktop.css";
+@import "./devices/desktop-wide.css";
+@import "./devices/short-height.css";
+
+/* 3. Component features sheets */
+@import "./features/start-page.css";
+@import "./features/position-page.css";
+@import "./features/board.css";
+@import "./features/moves.css";
+@import "./features/panels.css";
+@import "./features/settings.css";
+
+/* Base Overrides for clean body layout */
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  background-color: #020617; /* Slate 950 */
+  color: #f1f5f9; /* Slate 100 */
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #334155;
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #475569;
+}

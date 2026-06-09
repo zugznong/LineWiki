@@ -1,0 +1,87 @@
+/* Position Page Layout and TopBar Styles */
+
+.position-page-root {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+  background-color: var(--color-bg-base);
+  color: var(--color-text-primary);
+  font-family: var(--font-body);
+}
+
+.position-layout-grid {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  flex-1: 1 1 0%;
+  overflow: hidden;
+}
+
+/* Fallback & Error State inside App Layout */
+.fallback-screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  background-color: var(--color-bg-base);
+  height: 100%;
+}
+
+.fallback-box {
+  background-color: var(--color-bg-surface);
+  border: 1px solid var(--color-border-primary);
+  border-radius: var(--radius-panel);
+  max-width: 420px;
+  width: 100%;
+  padding: 2rem;
+  text-align: center;
+  box-shadow: 0 10px 25px -5px rgba(0,0,0,0.5);
+}
+
+/* Header / Top Bar Controls */
+.top-bar-container {
+  height: 3.5rem; /* 56px */
+  background-color: rgba(15, 23, 42, 0.7); /* slate-900/70 */
+  backdrop-filter: blur(8px);
+  border-b: 1px solid var(--color-border-primary);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 1rem;
+  z-index: var(--z-navigation-header);
+  flex-shrink: 0;
+}
+
+.top-bar-heading {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: var(--font-size-title-sm);
+  color: var(--color-text-primary);
+  letter-spacing: -0.01em;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.top-bar-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.position-fen-display {
+  font-family: var(--font-mono);
+  font-size: var(--font-size-caption);
+  color: var(--color-text-muted);
+  background-color: rgba(2, 6, 17, 0.4);
+  padding: 0.35rem 0.65rem;
+  border-radius: var(--radius-badge);
+  border: 1px solid rgba(30, 41, 59, 0.3);
+  max-width: 280px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

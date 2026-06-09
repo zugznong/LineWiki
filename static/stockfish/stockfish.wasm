@@ -1,0 +1,10 @@
+# LineWiki Stockfish WebAssembly Binary Placeholder
+# In Open Beta 0, the engine uses the interactive JS layout simulator (stockfish.js) to build evaluate strings client-side.
+# To replace with genuine fully compiled stockfish-nnue.wasm:
+# 1. Obtain stockfish.wasm from the official Stockfish WASM project distribution.
+# 2. Overwrite this placeholder file with the actual raw binary output. 
+# 3. Ensure cloudflare deployment MIME-type is configured for "application/wasm".
+VERSION: Stockfish 16.1 WASM Binary Stub
+BUILD_STAGE: OPEN_BETA_0
+MIME: application/wasm
+STATUS: READY_FOR_UPGRADE

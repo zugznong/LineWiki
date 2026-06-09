@@ -1,0 +1,26 @@
+# SvelteKit and Vite artifacts
+.svelte-kit/
+build/
+dist/
+.env
+.env.*
+!.env.example
+
+# Runtime dependencies
+node_modules/
+package-lock.json
+
+# Cloudflare Wrangler files
+.wrangler/
+.dev.vars
+
+# Testing results and logs
+coverage/
+*.log
+.pnpm-debug.log*
+
+# OS specific files
+.DS_Store
+Thumbs.db
+
+_local/

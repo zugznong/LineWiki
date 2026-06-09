@@ -1,0 +1,8 @@
+:root {
+  --radius-board: 1rem;       /* 16px */
+  --radius-card: 0.75rem;     /* 12px */
+  --radius-button: 0.75rem;   /* 12px */
+  --radius-input: 0.75rem;    /* 12px */
+  --radius-panel: 1.25rem;    /* 20px */
+  --radius-badge: 0.5rem;     /* 8px */
+}
