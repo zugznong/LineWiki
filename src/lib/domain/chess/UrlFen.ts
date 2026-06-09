@@ -1,6 +1,7 @@
 import type { Result } from '../../utils/result';
-import { success, failure } from '../../utils/result';
+import { failure } from '../../utils/result';
 import { Fen, InvalidFenError } from './Fen';
+import { ensureSafeUrlFenSegment, ensureSafeFenString } from './fenSafety';
 
 /**
  * FEN 문자열의 공백을 언더바(_)로 치환하여 URL 세그먼트나 라우트 매개변수에서 
@@ -25,8 +26,22 @@ export class UrlFen {
     if (!urlFenStr) {
       return failure(new InvalidFenError('URL FEN 문자열이 비어 있습니다.'));
     }
-    const decoded = urlFenStr.replace(/_/g, ' ');
-    return Fen.create(decoded);
+
+    // 1. 원본 URL 세그먼트 안전성 검증 (길이 제한, 제어 문자/꺾쇠 차단)
+    const safeSegment = ensureSafeUrlFenSegment(urlFenStr);
+    if (safeSegment.isFailure()) {
+      return failure(safeSegment.unwrapErr());
+    }
+
+    // 2. 언더바(_) → 공백 복원 후 복원된 표준 FEN 안전성 재검증
+    const decoded = safeSegment.unwrap().replace(/_/g, ' ');
+    const safeDecoded = ensureSafeFenString(decoded);
+    if (safeDecoded.isFailure()) {
+      return failure(safeDecoded.unwrapErr());
+    }
+
+    // 3. 도메인 구조 검증 (8행 보드, 킹 개수, 각 필드 형식 등)
+    return Fen.create(safeDecoded.unwrap());
   }
 
   /**

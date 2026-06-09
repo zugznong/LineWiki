@@ -44,5 +44,27 @@ describe('UrlFen Domain Value Object Tests', () => {
     expect(result.isFailure()).toBe(true);
     expect(result.unwrapErr().message).toContain('8행으로 구성되어야 하나');
   });
+
+  it('should reject oversized FEN URL input without throwing', () => {
+    const oversized = 'r'.repeat(300);
+    const result = UrlFen.toStandardFen(oversized);
+    expect(result.isFailure()).toBe(true);
+    expect(result.unwrapErr().message).toContain('최대 길이');
+  });
+
+  it('should reject CR/LF injection attempts in the URL segment', () => {
+    const result = UrlFen.toStandardFen('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR_w\n_KQkq');
+    expect(result.isFailure()).toBe(true);
+  });
+
+  it('should reject null bytes and control characters', () => {
+    const result = UrlFen.toStandardFen('rnbqkbnr\x00_w_-_-_0_1');
+    expect(result.isFailure()).toBe(true);
+  });
+
+  it('should reject angle-bracket payloads', () => {
+    const result = UrlFen.toStandardFen('<img/src>_w');
+    expect(result.isFailure()).toBe(true);
+  });
 });
 
