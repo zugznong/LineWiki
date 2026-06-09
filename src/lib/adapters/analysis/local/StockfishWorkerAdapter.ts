@@ -98,11 +98,17 @@ export class StockfishWorkerAdapter implements LocalAnalysisPort {
     
     const move = this.analysisQueue[this.currentQueueIndex];
     this.activeMoveUci = move.uci;
-    
-    // 후보수 적용 후 국면을 바로 resultingFen으로 세팅하여 전달
-    this.send(StockfishCommandBuilder.setPosition(move.resultingFen));
-    // Depth 10으로 빠르게 한 차례 분석을 완성합니다.
-    this.send(StockfishCommandBuilder.goDepth(10));
+
+    try {
+      // 후보수 적용 후 국면을 바로 resultingFen으로 세팅하여 전달
+      this.send(StockfishCommandBuilder.setPosition(move.resultingFen));
+      // Depth 10으로 빠르게 한 차례 분석을 완성합니다.
+      this.send(StockfishCommandBuilder.goDepth(10));
+    } catch {
+      // 안전하지 않은 FEN이 감지되면 해당 후보수를 건너뛰고 다음 큐 항목으로 안전하게 진행합니다.
+      this.currentQueueIndex++;
+      this.analyzeNextMoveInQueue();
+    }
   }
 
   private handleWorkerMessage(message: string): void {
