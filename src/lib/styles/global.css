@@ -27,9 +27,16 @@
 html, body {
   margin: 0;
   padding: 0;
-  height: 100%;
+  height: 100dvh;
+  min-height: 100dvh;
   background-color: var(--color-bg-base);
   color: #f1f5f9; /* Slate 100 */
+  overflow: hidden;
+}
+
+#svelte {
+  height: 100dvh;
+  min-height: 100dvh;
 }
 
 /* Scrollbar styling */

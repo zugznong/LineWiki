@@ -10,7 +10,7 @@
   }
 
   /* Force Board dimensions to scale responsively based on viewport width */
-  #mobile-single-flow-layout #chess-board-wrapper {
+  #mobile-single-flow-layout #chess-board-card {
     width: 100% !important;
     max-width: min(calc(100vw - 2.5rem), 400px) !important;
     aspect-ratio: 1 / 1;
@@ -18,12 +18,19 @@
     margin-right: auto;
   }
 
+  #mobile-single-flow-layout #chess-board-wrapper {
+    width: 100% !important;
+    height: 100% !important;
+    max-width: 100% !important;
+    max-height: 100% !important;
+  }
+
   /* Order layout adjustments for sequential mobile flow */
   #mobile-board-toolbar {
     order: 1;
   }
 
-  #mobile-single-flow-layout div:has(> #chess-board-wrapper) {
+  #mobile-board-card {
     order: 2;
   }
 

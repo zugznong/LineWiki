@@ -92,7 +92,14 @@ pnpm test
 
 ---
 
-## 📄 6. 라이선스 고지 (License)
+## 🤝 6. 기여자 (Contributors)
+
+Special thanks to:
+
+* [@VectorSophie](https://github.com/VectorSophie) — 오픈베타 0의 보안, 개인정보 안내, CI, 배포 문서, FEN/네비게이션 안전성, 로컬 분석 Worker 생애주기, 평가 정렬 및 브라우저 저장소 테스트 개선안을 제안해 주셨습니다.
+
+
+## 📄 7. 라이선스 고지 (License)
 - **전체 라이선스**: LineWiki 솔루션은 오픈소스 **GNU General Public License v3.0 (GPL-3.0-or-later)** 하에 배포됩니다. 본 프로젝트는 Free Software Foundation이 공표한 GNU General Public License v3.0 또는 그 이후에 발표되는 모든 최신 개정 버전(GPL-3.0-or-later)을 준수하며, 어떠한 배포 규격에서도 "GPL v3.0 또는 그 이후의 버전" 조건 중 선택하여 법적 권리를 행사할 수 있습니다.
 - **Stockfish 통합 라이선스**: 이 서비스는 오픈소스 체스 엔진인 **Stockfish** 또는 Stockfish 기반 구성요소(WASM/JS 포팅 등)를 기획에 따라 포함하거나 실행합니다. Stockfish 엔진의 원본 소스코드는 [Stockfish 공식 GitHub](https://github.com/official-stockfish/Stockfish)에서 제공되며, 독자적인 GPL-3.0 복사조건(copyleft)을 엄격하게 준수합니다.
 - **로컬 휴리스틱 백업**: 복잡한 환경이나 fallback 상황에서 구동되는 로컬 휴리스틱 모의 엔진(LineWiki Heuristics Fallback Engine) 역시 GPL-3.0 조항 하에 소스코드의 결합 가용성이 보증됩니다.

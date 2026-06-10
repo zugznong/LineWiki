@@ -28,11 +28,7 @@ describe('Security Headers Policy Test Suite', () => {
     expect(content).not.toContain('https://ai.studio');
     expect(content).not.toContain('https://*.google.com');
 
-    // 2. Verify that static/_headers config does NOT exist (avoiding duplicate or mislocated builds)
-    const staticHeadersPath = path.resolve('static/_headers');
-    expect(fs.existsSync(staticHeadersPath)).toBe(false);
-
-    // 3. Verify security config file and dynamic svelte application server hooks
+    // Verify dynamic configuration has same features
     const configPath = path.resolve('src/lib/security/securityHeaders.ts');
     const hooksPath = path.resolve('src/hooks.server.ts');
 
@@ -49,6 +45,35 @@ describe('Security Headers Policy Test Suite', () => {
     expect(configContent).toContain('DENY');
     expect(configContent).toContain("frame-ancestors 'none'");
     expect(configContent).toContain("object-src 'none'");
+
+    // 4. Verification of "Only Report-Only" of Content-Security-Policy (No Enforced Policy Present)
+    // Both absolute static _headers and local configTS should not be exposing basic Content-Security-Policy enforced header
+    expect(content).not.toContain('\n  Content-Security-Policy:');
+    expect(configContent).not.toContain("'Content-Security-Policy':");
+
+    // Both should contain Content-Security-Policy-Report-Only headers
+    expect(content).toContain('Content-Security-Policy-Report-Only:');
+    expect(configContent).toContain("'Content-Security-Policy-Report-Only':");
+
+    // 5. Check key mandatory directives are present in both static _headers CSP & securityHeaders.ts CSP
+    const requiredDirectives = [
+      "default-src 'self'",
+      "script-src 'self' 'unsafe-inline' blob:",
+      "worker-src 'self' blob:",
+      "style-src 'self' 'unsafe-inline'",
+      "img-src 'self' data:",
+      "font-src 'self'",
+      "connect-src 'self'",
+      "object-src 'none'",
+      "base-uri 'self'",
+      "frame-ancestors 'none'",
+      "form-action 'self'"
+    ];
+
+    for (const directive of requiredDirectives) {
+      expect(content).toContain(directive);
+      expect(configContent).toContain(directive);
+    }
 
     // Verify hooks import the config and handle appropriately
     expect(hooksContent).toContain('handle');

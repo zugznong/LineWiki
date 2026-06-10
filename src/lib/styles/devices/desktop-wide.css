@@ -16,8 +16,14 @@
     gap: 1.75rem !important;
   }
 
+  #desktop-3-column-layout #chess-board-card {
+    max-height: 800px !important;
+    max-width: 800px !important;
+  }
+
   #desktop-3-column-layout #chess-board-wrapper {
-    max-height: 640px !important;
+    max-height: 100% !important;
+    max-width: 100% !important;
   }
 
   #desktop-candidate-col #candidate-move-container {

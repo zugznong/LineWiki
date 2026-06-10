@@ -12,10 +12,11 @@
   const isLowHeight = $derived(viewportStore.isLowHeightDesktop);
   const isCompact = $derived(viewportStore.isCompactDesktop);
   const useCompactMode = $derived(isLowHeight || isCompact);
+  const useThreeColumnLayout = $derived(viewportStore.isDesktop && viewportStore.width >= 1200);
 </script>
 
 <div class="flex-1 {useCompactMode ? 'p-2 md:p-3' : 'p-3 md:p-5'} overflow-hidden flex flex-col min-h-0" id="position-main-area">
-  {#if isDesktop}
+  {#if useThreeColumnLayout}
     <!-- 데스크톱 3열 레이아웃 (Layout for Desktop >= 1024px) -->
     <div class="flex-1 flex flex-row {useCompactMode ? 'gap-3' : 'gap-5'} overflow-hidden min-h-0" id="desktop-3-column-layout">
       
@@ -65,7 +66,7 @@
       </div>
 
       <!-- 보드 영역 (정방형 자동 스케일링 유도) -->
-      <div class="flex flex-col items-center justify-center p-3 bg-[var(--color-bg-panel)]/15 border border-[var(--color-border-primary)] rounded-2xl shrink-0">
+      <div id="mobile-board-card" class="flex flex-col items-center justify-center p-3 bg-[var(--color-bg-panel)]/15 border border-[var(--color-border-primary)] rounded-2xl shrink-0">
         <Board />
       </div>
 

@@ -10,7 +10,7 @@
   const activeTab = $derived(panelStore.activeTab);
 </script>
 
-<div class="flex flex-col border border-[var(--color-border-primary)] bg-[var(--color-bg-surface)] rounded-2xl overflow-hidden shrink-0 min-h-[360px] min-h-0" id="bottom-panel-container">
+<div class="flex flex-col border border-[var(--color-border-primary)] bg-[var(--color-bg-surface)] rounded-2xl overflow-hidden shrink-0 h-full min-h-[360px]" id="bottom-panel-container">
   <div class="px-4 py-3 border-b border-[var(--color-border-primary)] bg-[var(--color-bg-nested)] shrink-0">
     <h3 class="text-xs font-bold text-slate-300">정밀 분석 패널 (Details & Analysis)</h3>
   </div>

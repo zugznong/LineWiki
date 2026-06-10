@@ -12,7 +12,7 @@
   # CSP는 우선 Report-Only로 적용합니다. 위반 시 브라우저 콘솔에만 보고되고 실제 차단은 하지 않습니다.
   # 모든 자산(특히 SvelteKit 하이드레이션 인라인 스크립트, Web Worker, 향후 Stockfish WASM)이
   # 정상 동작함을 확인한 뒤 enforced(Content-Security-Policy)로 승격하세요.
-  Content-Security-Policy-Report-Only: default-src 'self'; script-src 'self'; worker-src 'self' blob:; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self'
+  Content-Security-Policy-Report-Only: default-src 'self'; script-src 'self' 'unsafe-inline' blob:; worker-src 'self' blob:; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self'
 
 # 참고: 향후 고성능 Stockfish WASM 멀티스레드(SharedArrayBuffer)를 도입하려면
 #   Cross-Origin-Opener-Policy: same-origin (이미 적용됨)

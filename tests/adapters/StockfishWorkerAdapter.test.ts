@@ -105,4 +105,42 @@ describe('StockfishWorkerAdapter lifecycle', () => {
     );
     expect(onResult).not.toHaveBeenCalled();
   });
+
+  it('does not emit bestmove from late messages after stop()', () => {
+    const adapter = new StockfishWorkerAdapter();
+    const worker = makeFakeWorker();
+    injectWorker(adapter, worker);
+    const onResult = vi.fn();
+    adapter.onResult(onResult);
+
+    adapter.start(MOVE.resultingFen, [MOVE]);
+    adapter.stop();
+    onResult.mockClear();
+
+    // 분석 중단 후 도착한 지연 bestmove 라인 역시 결과를 야기해선 안 됩니다.
+    (adapter as unknown as { handleWorkerMessage: (m: string) => void }).handleWorkerMessage(
+      'bestmove e2e4 ponder e7e5'
+    );
+    expect(onResult).not.toHaveBeenCalled();
+  });
+
+  it('does not emit any messages after dispose()', () => {
+    const adapter = new StockfishWorkerAdapter();
+    const worker = makeFakeWorker();
+    injectWorker(adapter, worker);
+    const onResult = vi.fn();
+    adapter.onResult(onResult);
+
+    adapter.start(MOVE.resultingFen, [MOVE]);
+    adapter.dispose();
+    onResult.mockClear();
+
+    // 폐기 처분 후 동작하는 어떤 info 기별 혹은 bestmove 기별도 전혀 무시되어야 합니다.
+    const handleMsg = (adapter as unknown as { handleWorkerMessage: (m: string) => void }).handleWorkerMessage.bind(adapter);
+    
+    handleMsg('info depth 10 score cp 200');
+    handleMsg('bestmove g1f3');
+
+    expect(onResult).not.toHaveBeenCalled();
+  });
 });

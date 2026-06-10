@@ -42,4 +42,36 @@ describe('lowHeightLayout Regression Tests', () => {
     expect(board.squareSize).toBe(44);
     expect(board.size).toBe(352);
   });
+
+  it('should verify layoutMode and boardSize for 1024x768 (desktop bounds)', () => {
+    const mode = getLayoutMode(1024, 768);
+    const board = calculateBoardSize(1024, 768);
+    expect(mode).toBe('desktop');
+    expect(board.squareSize).toBe(75);
+    expect(board.size).toBe(600);
+  });
+
+  it('should verify layoutMode and boardSize for 1180x800 (desktop bounds)', () => {
+    const mode = getLayoutMode(1180, 800);
+    const board = calculateBoardSize(1180, 800);
+    expect(mode).toBe('desktop');
+    expect(board.squareSize).toBe(75);
+    expect(board.size).toBe(600);
+  });
+
+  it('should verify layoutMode and boardSize for 1280x720 (desktop bounds)', () => {
+    const mode = getLayoutMode(1280, 720);
+    const board = calculateBoardSize(1280, 720);
+    expect(mode).toBe('desktop');
+    expect(board.squareSize).toBe(75);
+    expect(board.size).toBe(600);
+  });
+
+  it('should verify layoutMode and boardSize for 667x375 (mobile-landscape)', () => {
+    const mode = getLayoutMode(667, 375);
+    const board = calculateBoardSize(667, 375);
+    expect(mode).toBe('mobile-landscape');
+    expect(board.squareSize).toBe(40);
+    expect(board.size).toBe(320);
+  });
 });

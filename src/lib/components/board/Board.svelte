@@ -118,12 +118,12 @@
 <div 
   class="w-full flex-1 flex items-center justify-center p-4 min-h-[300px] border border-[var(--color-border-primary)] bg-[var(--color-bg-nested)]/20 rounded-2xl relative"
   bind:this={containerElement}
-  id="chess-board-wrapper"
+  id="chess-board-card"
 >
   <div 
     class="relative rounded-[2px] shadow-2xl transition-all duration-300"
     style="width: {boardSize}px; height: {boardSize}px;"
-    id="chess-grid"
+    id="chess-board-wrapper"
   >
     <!-- Overlay boundaries -->
     {#if currentPosition?.isCheckmate || currentPosition?.isDraw}

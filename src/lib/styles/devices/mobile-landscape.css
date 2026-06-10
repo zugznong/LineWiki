@@ -11,12 +11,19 @@
   }
 
   /* Force board size to rely strictly on vertical heights */
-  #chess-board-wrapper {
+  #chess-board-card {
     height: calc(100vh - 80px) !important;
     width: calc(100vh - 80px) !important;
     max-height: 320px !important;
     max-width: 320px !important;
     aspect-ratio: 1 / 1;
+  }
+
+  #chess-board-wrapper {
+    width: 100% !important;
+    height: 100% !important;
+    max-width: 100% !important;
+    max-height: 100% !important;
   }
 
   /* Quick fix columns side layout */

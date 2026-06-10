@@ -13,6 +13,7 @@ export class StockfishWorkerAdapter implements LocalAnalysisPort {
   private hasFailed: boolean = false;
   private generation: number = 0;
   private idleCallbackId: any = null;
+  private isAnalysisActive: boolean = false;
 
   // 후보수별 순차 연산을 위한 큐 상태 관리 변수군
   private analysisQueue: any[] = [];
@@ -24,6 +25,19 @@ export class StockfishWorkerAdapter implements LocalAnalysisPort {
 
   constructor() {
     // Lazy initialization of Web Worker inside start or send
+  }
+
+  private clearScheduledIdleWork(): void {
+    if (this.idleTimeoutId) {
+      clearTimeout(this.idleTimeoutId);
+      this.idleTimeoutId = null;
+    }
+    if (this.idleCallbackId !== null) {
+      if (typeof window !== 'undefined' && 'cancelIdleCallback' in window) {
+        (window as any).cancelIdleCallback(this.idleCallbackId);
+      }
+      this.idleCallbackId = null;
+    }
   }
 
   private initWorker(): void {
@@ -58,6 +72,8 @@ export class StockfishWorkerAdapter implements LocalAnalysisPort {
   }
 
   private clearQueueOnFailure(): void {
+    this.isAnalysisActive = false;
+    this.clearScheduledIdleWork();
     this.analysisQueue = [];
     this.currentQueueIndex = -1;
     this.activeMoveUci = '';
@@ -134,6 +150,7 @@ export class StockfishWorkerAdapter implements LocalAnalysisPort {
     this.generation++; // 새로운 분석 세션 생성
     this.stop(); // 사전 실행되던 연산 완전 청소
 
+    this.isAnalysisActive = true;
     this.currentFen = fen;
 
     // 후보수 전술 정렬 및 가중치 고지 큐 우선순위 정책 적용
@@ -156,16 +173,8 @@ export class StockfishWorkerAdapter implements LocalAnalysisPort {
   }
 
   public stop(): void {
-    if (this.idleTimeoutId) {
-      clearTimeout(this.idleTimeoutId);
-      this.idleTimeoutId = null;
-    }
-    if (this.idleCallbackId !== null) {
-      if (typeof window !== 'undefined' && 'cancelIdleCallback' in window) {
-        (window as any).cancelIdleCallback(this.idleCallbackId);
-      }
-      this.idleCallbackId = null;
-    }
+    this.isAnalysisActive = false;
+    this.clearScheduledIdleWork();
 
     this.analysisQueue = [];
     this.currentQueueIndex = -1;
@@ -216,10 +225,7 @@ export class StockfishWorkerAdapter implements LocalAnalysisPort {
    * 큐에 정소된 가용한 다음 후보수를 산출해 본격적인 연산을 기동합니다.
    */
   private analyzeNextMoveInQueue(): void {
-    if (this.idleTimeoutId) {
-      clearTimeout(this.idleTimeoutId);
-      this.idleTimeoutId = null;
-    }
+    this.clearScheduledIdleWork();
 
     if (this.currentQueueIndex < 0 || this.currentQueueIndex >= this.analysisQueue.length) {
       // 1단계(Quick pass)가 종료된 경우, 2단계(Deep pass)로 즉시 루프 변환 기동
@@ -246,16 +252,7 @@ export class StockfishWorkerAdapter implements LocalAnalysisPort {
       const targetGen = this.generation;
       const targetFen = this.currentFen;
 
-      if (this.idleCallbackId !== null) {
-        if (typeof window !== 'undefined' && 'cancelIdleCallback' in window) {
-          (window as any).cancelIdleCallback(this.idleCallbackId);
-        }
-        this.idleCallbackId = null;
-      }
-      if (this.idleTimeoutId) {
-        clearTimeout(this.idleTimeoutId);
-        this.idleTimeoutId = null;
-      }
+      this.clearScheduledIdleWork();
 
       if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
         this.idleCallbackId = (window as any).requestIdleCallback(() => {
@@ -311,6 +308,7 @@ export class StockfishWorkerAdapter implements LocalAnalysisPort {
 
   private handleWorkerMessage(message: string): void {
     if (typeof message !== 'string') return;
+    if (!this.isAnalysisActive) return;
     
     // Check for custom worker runtime initializer errors
     if (message.startsWith('error:')) {
