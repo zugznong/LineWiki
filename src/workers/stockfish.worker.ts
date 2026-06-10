@@ -34,7 +34,8 @@ class LocalFallbackEngine {
       this.activeMoveUci = '';
     } else if (trimmed.startsWith('go ')) {
       this.startAnalysis();
-    } else if (trimmed === 'stop') {
+    } else if (trimmed === 'stop' || trimmed === 'quit') {
+      // stop/quit 모두 진행 중인 depth pulse 타이머를 즉시 정리합니다.
       this.stopAnalysis();
     }
   }

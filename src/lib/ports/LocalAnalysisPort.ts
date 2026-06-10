@@ -18,5 +18,11 @@ export interface LocalAnalysisPort {
    * 분석 결과(Evaluation)의 실시간 상태 변화 이벤트를 관찰하기 위한 구독 제어를 제공합니다.
    */
   onResult(callback: (res: any) => void): void;
+
+  /**
+   * 분석을 중단하고 백그라운드 워커/타이머 등 모든 자원을 완전히 해제합니다.
+   * 페이지 이탈 등 생애주기 정리 시점(onDestroy)에 호출됩니다.
+   */
+  dispose(): void;
 }
 

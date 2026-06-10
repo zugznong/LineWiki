@@ -78,8 +78,31 @@ export class StockfishWorkerAdapter implements LocalAnalysisPort {
     this.analysisQueue = [];
     this.currentQueueIndex = -1;
     this.activeMoveUci = '';
-    this.send(StockfishCommandBuilder.stop());
+    // 워커가 없을 때 stop을 위해 새 워커를 생성하지 않도록 send() 대신 직접 전송합니다.
+    if (this.worker) {
+      this.worker.postMessage(StockfishCommandBuilder.stop());
+    }
     localAnalysisStore.stopAnalysis();
+  }
+
+  /**
+   * 분석을 중단하고 Web Worker를 완전히 종료(terminate)하여 모든 백그라운드 자원과 타이머를 해제합니다.
+   * 페이지 이탈(onDestroy) 등 어댑터 생애주기 정리가 필요한 시점에 호출됩니다.
+   * 호출 이후에도 start()를 다시 부르면 워커가 지연 초기화(lazy init)되어 재사용 가능합니다.
+   */
+  public dispose(): void {
+    this.stop();
+    if (this.worker) {
+      try {
+        this.worker.postMessage(StockfishCommandBuilder.quit());
+      } catch {
+        // 워커가 이미 비정상 종료된 경우 quit 전송 실패는 무시합니다.
+      }
+      this.worker.terminate();
+      this.worker = null;
+    }
+    this.onResultCallback = null;
+    this.currentFen = '';
   }
 
   public onResult(callback: (res: any) => void): void {
