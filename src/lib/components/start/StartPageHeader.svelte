@@ -13,7 +13,7 @@
   <p class="text-emerald-400 font-semibold tracking-wider text-sm md:text-base mb-4 uppercase" id="linewiki-subtitle">
     FEN 하나로 열리는 체스 포지션 연구 도구
   </p>
-  <p class="text-slate-400 text-sm md:text-base leading-relaxed max-w-md mx-auto" id="linewiki-description">
+  <p class="text-slate-300 text-sm md:text-base leading-relaxed max-w-md mx-auto" id="linewiki-description">
     체스 포지션 FEN 정보 하나로 무한한 연구용 페이지를 생성하고, 임시 로컬 휴리스틱 분석과 어시스턴스를 장착해 실시간으로 라인을 검토하세요.
   </p>
 </div>

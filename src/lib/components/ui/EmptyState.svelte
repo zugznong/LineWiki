@@ -18,10 +18,10 @@
 </script>
 
 <div 
-  class="flex flex-col items-center justify-center text-center p-8 rounded-2xl border border-slate-900/60 bg-slate-900/5 space-y-3 select-none w-full"
+  class="flex flex-col items-center justify-center text-center p-8 rounded-2xl border border-[var(--color-border-primary)] bg-[var(--color-bg-card)]/50 space-y-3 select-none w-full"
   {id}
 >
-  <div class="p-3 bg-slate-950/40 rounded-2xl border border-slate-900 text-slate-500 hover:scale-105 transition duration-150">
+  <div class="p-3 bg-[var(--color-bg-nested)] rounded-2xl border border-[var(--color-border-primary)] text-slate-500 hover:scale-105 transition duration-150">
     <IconComponent size={20} class="text-slate-500 shrink-0" />
   </div>
 

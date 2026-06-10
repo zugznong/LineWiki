@@ -28,7 +28,7 @@ html, body {
   margin: 0;
   padding: 0;
   height: 100%;
-  background-color: #020617; /* Slate 950 */
+  background-color: var(--color-bg-base);
   color: #f1f5f9; /* Slate 100 */
 }
 
@@ -41,9 +41,9 @@ html, body {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: #334155;
+  background: #5a554f;
   border-radius: 9999px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #475569;
+  background: #6b655d;
 }

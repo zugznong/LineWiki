@@ -39,7 +39,13 @@ export function getNavigateMove() {
   if (!cachedNavigateMove) {
     const navigation = getNavigationAdapter();
     const storage = getStorageServices();
-    cachedNavigateMove = new NavigateMoveUseCase(navigation, storage.pushLineHistory);
+    const chess = getChessServices();
+    cachedNavigateMove = new NavigateMoveUseCase(
+      navigation,
+      storage.pushLineHistory,
+      storage.startLineSession,
+      chess.chessEngine
+    );
   }
   return cachedNavigateMove;
 }

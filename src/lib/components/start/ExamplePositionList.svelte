@@ -11,12 +11,10 @@
     const storage = getStorageServices();
     const navigation = getNavigationAdapter();
 
-    if (typeof sessionStorage !== 'undefined') {
-      sessionStorage.setItem('linewiki.session.startedFromApp', 'true');
-    }
-    storage.clearLineHistory.execute();
     const destinationPath = chess.createFenUrl.execute(fen);
     if (destinationPath && destinationPath.trim()) {
+      storage.startLineSession.execute();
+      storage.clearLineHistory.execute();
       navigation.goto(destinationPath);
     } else {
       console.warn(`[포지션 이동 오류] 유효하지 않은 FEN 표현식으로 인해 URL 생성이 차단되었습니다: FEN="${fen}"`);
@@ -34,7 +32,7 @@
     {#each examples as item}
       <button
         onclick={() => selectExample(item.fen)}
-        class="w-full bg-slate-900/45 hover:bg-slate-900/90 border border-slate-800/80 hover:border-slate-700/80 rounded-xl p-4 flex items-center justify-between text-left transition hover:-translate-y-0.5 active:translate-y-0 group cursor-pointer"
+        class="w-full bg-[var(--color-bg-card)]/45 hover:bg-[var(--color-bg-panel)]/90 border border-[var(--color-border-primary)]/80 hover:border-[var(--color-border-secondary)]/80 rounded-xl p-4 flex items-center justify-between text-left transition hover:-translate-y-0.5 active:translate-y-0 group cursor-pointer"
       >
         <div class="space-y-1 pr-4">
           <div class="text-sm font-semibold text-slate-200 group-hover:text-emerald-400 transition">

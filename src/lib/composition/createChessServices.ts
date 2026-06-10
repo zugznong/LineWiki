@@ -8,7 +8,7 @@ import { RestoreFenFromUrlUseCase } from '../application/chess/RestoreFenFromUrl
 // Singletons to prevent reinstantiating inside component updates
 const chessEngine = new ChessJsEngineAdapter();
 const createPosition = new CreatePositionFromFenUseCase(chessEngine);
-const createFenUrl = new CreateFenUrlUseCase();
+const createFenUrl = new CreateFenUrlUseCase(chessEngine);
 const generateCandidateMoves = new GenerateCandidateMovesUseCase(chessEngine);
 const playMove = new PlayMoveUseCase(chessEngine);
 const restoreFenFromUrl = new RestoreFenFromUrlUseCase(chessEngine);

@@ -1,6 +1,7 @@
 <script lang="ts">
   import BoardCoordinates from './BoardCoordinates.svelte';
   import { boardStore } from '$lib/stores/boardStore.svelte.ts';
+  import { isLightSquare } from '$lib/domain/chess/SquareColor';
 
   let { 
     file, 
@@ -20,7 +21,7 @@
     children?: any;
   }>();
 
-  const isLight = $derived(((file.charCodeAt(0) - 97) + rank) % 2 !== 0);
+  const isLight = $derived(isLightSquare(file, rank));
 
   // Background visual themes colors inline mapping
   const bgColor = $derived(

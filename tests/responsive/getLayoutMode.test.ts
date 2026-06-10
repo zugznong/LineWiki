@@ -19,10 +19,9 @@ describe('getLayoutMode Tests', () => {
 
   it('should identify short-height mode', () => {
     // Width >= 768, height < 600
-    expect(getLayoutMode(1024, 500)).toBe('short-height');
+    expect(getLayoutMode(900, 500)).toBe('short-height');
     expect(getLayoutMode(800, 599)).toBe('short-height');
     expect(getLayoutMode(1280, 480)).toBe('short-height');
-    expect(getLayoutMode(1920, 550)).toBe('short-height');
   });
 
   it('should identify tablet mode', () => {
@@ -44,6 +43,16 @@ describe('getLayoutMode Tests', () => {
     expect(getLayoutMode(1440, 900)).toBe('desktop-wide');
     expect(getLayoutMode(2560, 1440)).toBe('desktop-wide');
     expect(getLayoutMode(1680, 1050)).toBe('desktop-wide');
+  });
+
+  it('should identify compactDesktop and lowHeightDesktop modes', () => {
+    // compactDesktop: width < 1200, height >= 600 && height < 685, ratio >= 1.5
+    expect(getLayoutMode(1024, 600)).toBe('compactDesktop');
+    expect(getLayoutMode(1180, 640)).toBe('compactDesktop');
+
+    // lowHeightDesktop: height >= 500 && height < 650, ratio >= 1.9
+    expect(getLayoutMode(1366, 620)).toBe('lowHeightDesktop');
+    expect(getLayoutMode(1440, 620)).toBe('lowHeightDesktop');
   });
 
   it('should prioritize mobile-landscape over short-height when width < 768', () => {

@@ -30,6 +30,10 @@
   height: 100%;
 }
 
+#position-page-shell {
+  background-color: var(--color-bg-base);
+}
+
 .fallback-box {
   background-color: var(--color-bg-surface);
   border: 1px solid var(--color-border-primary);
@@ -44,7 +48,7 @@
 /* Header / Top Bar Controls */
 .top-bar-container {
   height: 3.5rem; /* 56px */
-  background-color: rgba(15, 23, 42, 0.7); /* slate-900/70 */
+  background-color: rgba(38, 36, 33, 0.75); /* warm representation surface/75 */
   backdrop-filter: blur(8px);
   border-b: 1px solid var(--color-border-primary);
   display: flex;
@@ -76,12 +80,20 @@
   font-family: var(--font-mono);
   font-size: var(--font-size-caption);
   color: var(--color-text-muted);
-  background-color: rgba(2, 6, 17, 0.4);
+  background-color: rgba(31, 30, 28, 0.5);
   padding: 0.35rem 0.65rem;
   border-radius: var(--radius-badge);
-  border: 1px solid rgba(30, 41, 59, 0.3);
+  border: 1px solid var(--color-border-primary);
   max-width: 280px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
+
+/* Parent layout chain constraints for child scrollability */
+#position-main-area,
+#desktop-3-column-layout {
+  min-height: 0;
+  overflow: hidden;
+}
+

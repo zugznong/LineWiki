@@ -5,3 +5,9 @@ allowBuilds:
 
 minimumReleaseAgeExclude:
   - "@sveltejs/kit@2.64.0"
+
+minimumReleaseAge: 1440
+minimumReleaseAgeStrict: true
+minimumReleaseAgeIgnoreMissingTime: false
+strictPeerDependencies: true
+engineStrict: true

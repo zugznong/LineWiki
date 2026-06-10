@@ -10,7 +10,11 @@ export class GenerateCandidateMovesUseCase {
     if (fenResult.isFailure()) {
       return new MoveList([]);
     }
-    const moves = this.chessEngine.getLegalMoves(fenResult.unwrap());
+    const fen = fenResult.unwrap();
+    if (!this.chessEngine.validateFen(fen.toString())) {
+      return new MoveList([]);
+    }
+    const moves = this.chessEngine.getLegalMoves(fen);
     return new MoveList(moves);
   }
 }

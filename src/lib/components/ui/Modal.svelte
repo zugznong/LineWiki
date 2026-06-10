@@ -34,7 +34,7 @@
 {#if show}
   <!-- Backdrop -->
   <div 
-    class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm select-none"
+    class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[var(--color-bg-nested)]/80 backdrop-blur-sm select-none"
     transition:fade={{ duration: 150 }}
     onclick={closeModal}
     role="presentation"
@@ -42,7 +42,7 @@
   >
     <!-- Modal content container -->
     <div 
-      class="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-md shadow-2xl p-5 space-y-4 overflow-hidden relative"
+      class="bg-[var(--color-bg-surface)] border border-[var(--color-border-primary)] rounded-3xl w-full max-w-md shadow-2xl p-5 space-y-4 overflow-hidden relative"
       transition:scale={{ duration: 180, start: 0.95 }}
       onclick={(e) => e.stopPropagation()}
       onkeydown={(e) => e.stopPropagation()}
@@ -52,7 +52,7 @@
       aria-labelledby="{id ? `${id}-title` : 'modal-title'}"
     >
       <!-- Header -->
-      <div class="flex items-center justify-between border-b border-slate-800/60 pb-3">
+      <div class="flex items-center justify-between border-b border-[var(--color-border-primary)]/60 pb-3">
         <h3 
           class="text-sm font-extrabold text-slate-100 tracking-tight" 
           id="{id ? `${id}-title` : 'modal-title'}"
@@ -62,7 +62,7 @@
         
         <button 
           onclick={closeModal}
-          class="text-slate-500 hover:text-slate-200 transition p-1 hover:bg-slate-800 rounded-lg cursor-pointer"
+          class="text-slate-500 hover:text-slate-200 transition p-1 hover:bg-[var(--color-bg-panel)] rounded-lg cursor-pointer"
           aria-label="닫기"
           id="{id ? `${id}-close-icon-btn` : 'modal-close-icon-btn'}"
         >

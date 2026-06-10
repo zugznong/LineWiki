@@ -14,6 +14,10 @@ export class CreatePositionFromFenUseCase {
     }
 
     const fen = fenResult.unwrap();
+    if (!this.chessEngine.validateFen(fen.toString())) {
+      return failure(new Error('유효하지 않은 FEN 포지션 코드 또는 체스 규칙 위반입니다.'));
+    }
+
     const isCheck = this.chessEngine.isCheck(fen);
     const isCheckmate = this.chessEngine.isCheckmate(fen);
     const isDraw = this.chessEngine.isDraw(fen);

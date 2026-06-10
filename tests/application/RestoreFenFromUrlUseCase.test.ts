@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { RestoreFenFromUrlUseCase } from '../../src/lib/application/chess/RestoreFenFromUrlUseCase';
 import { CreateFenUrlUseCase } from '../../src/lib/application/chess/CreateFenUrlUseCase';
+import { ChessJsEngineAdapter } from '../../src/lib/adapters/chess/ChessJsEngineAdapter';
 import { Fen } from '../../src/lib/domain/chess/Fen';
 import { FEN_PAGE_PREFIX } from '../../src/lib/config/appConfig';
 import type { ChessEnginePort } from '../../src/lib/ports/ChessEnginePort';
@@ -61,7 +62,7 @@ describe('RestoreFenFromUrlUseCase Use Case Tests', () => {
     } as unknown as ChessEnginePort;
 
     const restoreUseCase = new RestoreFenFromUrlUseCase(mockChessEngine);
-    const createUseCase = new CreateFenUrlUseCase();
+    const createUseCase = new CreateFenUrlUseCase(mockChessEngine);
 
     // Round-trip testing keys from our core example positions
     const filePath = path.resolve(__dirname, '../../static/examples/positions.json');
@@ -101,7 +102,7 @@ describe('RestoreFenFromUrlUseCase Use Case Tests', () => {
       validateFen: vi.fn().mockReturnValue(true)
     } as unknown as ChessEnginePort;
 
-    const createUseCase = new CreateFenUrlUseCase();
+    const createUseCase = new CreateFenUrlUseCase(mockChessEngine);
     const restoreUseCase = new RestoreFenFromUrlUseCase(mockChessEngine);
 
     const customTestCases = [
@@ -119,6 +120,19 @@ describe('RestoreFenFromUrlUseCase Use Case Tests', () => {
       expect(restored.isOk()).toBe(true);
       expect(restored.unwrap()).toBe(original);
     }
+  });
+
+  it('should return failure if restoring an impossible FEN position (e.g. turn rule violation) with ChessJsEngineAdapter', () => {
+    const actualEngine = new ChessJsEngineAdapter();
+    const useCase = new RestoreFenFromUrlUseCase(actualEngine);
+
+    // White to move but black king is under attack (URL-safe)
+    // FEN: 4k3/8/8/8/8/8/4R3/4K3 w - - 0 1
+    const urlSafeSegment = '4k3/8/8/8/8/8/4R3/4K3_w_-_-_0_1';
+    const result = useCase.execute(urlSafeSegment);
+
+    expect(result.isFailure()).toBe(true);
+    expect(result.unwrapErr().message).toContain('체스 FEN 코드가 검증 규칙에 통과하지 못했습니다.');
   });
 });
 

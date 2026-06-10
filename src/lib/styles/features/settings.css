@@ -5,7 +5,7 @@
   border: 1.5px solid var(--color-border-primary);
   border-radius: var(--radius-card);
   transition: all 180ms cubic-bezier(0.16, 1, 0.3, 1);
-  background-color: rgba(15, 23, 42, 0.35);
+  background-color: var(--color-bg-panel);
 }
 
 .theme-preset-card:hover {
@@ -36,7 +36,7 @@
 
 /* Custom mini decorative components preview layout */
 #board-theme-preview {
-  background-color: rgba(2, 6, 17, 0.45);
+  background-color: var(--color-bg-nested);
   border-radius: var(--radius-card);
   border: 1px solid var(--color-border-primary);
   transition: border-color 155s;
@@ -47,7 +47,7 @@
 }
 
 #piece-style-preview {
-  background-color: rgba(2, 6, 17, 0.45);
+  background-color: var(--color-bg-nested);
   border-radius: var(--radius-card);
   border: 1px solid var(--color-border-primary);
 }

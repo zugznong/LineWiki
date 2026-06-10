@@ -27,6 +27,7 @@ describe('PlayMoveUseCase Use Case Tests', () => {
     );
 
     const mockChessEngine = {
+      validateFen: vi.fn().mockReturnValue(true),
       getLegalMoves: vi.fn().mockReturnValue([e2e4Move]),
       makeMove: vi.fn().mockReturnValue(resultingFenStr)
     } as unknown as ChessEnginePort;
@@ -61,6 +62,7 @@ describe('PlayMoveUseCase Use Case Tests', () => {
     );
 
     const mockChessEngine = {
+      validateFen: vi.fn().mockReturnValue(true),
       getLegalMoves: vi.fn().mockReturnValue([e2e4Move]),
       makeMove: vi.fn()
     } as unknown as ChessEnginePort;
@@ -75,6 +77,7 @@ describe('PlayMoveUseCase Use Case Tests', () => {
 
   it('should fail to execute a move if the input starting FEN string itself is malformed', () => {
     const mockChessEngine = {
+      validateFen: vi.fn().mockReturnValue(false),
       getLegalMoves: vi.fn(),
       makeMove: vi.fn()
     } as unknown as ChessEnginePort;

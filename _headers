@@ -1,0 +1,10 @@
+# static/_headers placeholder rule config (Cloudflare Pages Static Assets Security Headers Only)
+# Note: Since dynamic route headers are managed in SvelteKit via `src/hooks.server.ts`,
+# these rules act as a backup/companion policy strictly prioritizing safe asset distribution.
+
+/*
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=()
+  X-Frame-Options: DENY
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' blob:; worker-src 'self' blob:; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none';

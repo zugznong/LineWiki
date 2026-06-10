@@ -33,10 +33,10 @@
     onkeydown={onkeydown}
     aria-label={ariaLabel}
     aria-invalid={invalid ? "true" : "false"}
-    class="w-full px-4 py-2.5 bg-slate-950/60 text-slate-100 placeholder-slate-600 rounded-xl border font-mono text-xs tracking-tight transition duration-150 focus:outline-none focus:ring-1 disabled:opacity-50 disabled:cursor-not-allowed
+    class="w-full px-4 py-2.5 bg-[var(--color-bg-nested)] text-slate-100 placeholder-slate-600 rounded-xl border font-mono text-xs tracking-tight transition duration-150 focus:outline-none focus:ring-1 disabled:opacity-50 disabled:cursor-not-allowed
       {invalid 
         ? 'border-rose-500/80 focus:border-rose-500 focus:ring-rose-500/25 bg-rose-950/10 text-rose-300' 
-        : 'border-slate-800 focus:border-emerald-500 focus:ring-emerald-500/20'} 
+        : 'border-[var(--color-border-primary)] focus:border-emerald-500 focus:ring-emerald-500/20'} 
       {inlineClass}"
   />
   

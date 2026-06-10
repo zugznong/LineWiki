@@ -1,12 +1,16 @@
 <script lang="ts">
-  import { localAnalysisStore } from '$lib/stores/localAnalysisStore.svelte.ts';
+  import type { EngineMoveEvaluation, MergedMoveEvaluation } from '../../domain/analysis/AnalysisTypes';
   import { ShieldAlert, TrendingUp, TrendingDown } from '@lucide/svelte';
 
-  let { uci } = $props<{ uci: string }>();
+  let { uci, evaluation, compact = false } = $props<{ 
+    uci: string; 
+    evaluation: EngineMoveEvaluation | MergedMoveEvaluation | undefined;
+    compact?: boolean; 
+  }>();
 
-  const evaluation = $derived(localAnalysisStore.getEvaluationForMove(uci));
   const score = $derived(evaluation?.score);
   const depth = $derived(evaluation?.depth);
+  const source = $derived(evaluation && 'source' in evaluation ? evaluation.source : 'local');
 
   const formattedText = $derived(score ? score.format() : '...');
   const isMate = $derived(score?.isMate() || false);
@@ -16,7 +20,7 @@
   // 반응형 배지 컬러링 공식 정의
   const badgeClasses = $derived(() => {
     if (!score) {
-      return 'bg-slate-900 text-slate-500 border border-slate-800/40';
+      return 'bg-[var(--color-bg-nested)] text-slate-500 border border-[var(--color-border-primary)]/40';
     }
     if (isMate) {
       if (numericValue > 0) {
@@ -32,23 +36,23 @@
     } else if (numericValue < -20) {
       return 'bg-rose-500/10 text-rose-400 border border-rose-500/25';
     } else {
-      return 'bg-slate-800 text-slate-300 border border-slate-700/60';
+      return 'bg-[var(--color-bg-card)] text-slate-300 border border-[var(--color-border-primary)]/60';
     }
   });
 </script>
 
-<div class="inline-flex items-center gap-1.5 font-mono text-xs" id="eval-cell-{uci}">
+<div class="inline-flex items-center {compact ? 'gap-1 text-[11px]' : 'gap-1.5 text-xs'} font-mono" id="eval-cell-{uci}">
   <span 
-    class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all duration-300 {badgeClasses()}"
-    title={score ? `로컬 엔진 산출 스코어 (Depth ${depth})` : '분석 대기 중'}
+    class="inline-flex items-center gap-1 {compact ? 'px-1.5 py-0.5 rounded-md text-[10px]' : 'px-2.5 py-1 rounded-lg text-[11px]'} font-semibold transition-all duration-300 {badgeClasses()}"
+    title={score ? `${source === 'db' ? '저장된 DB 평가치' : '로컬 엔진 산출 스코어'} (Depth ${depth})` : '분석 대기 중'}
   >
     {#if score}
       {#if isMate}
-        <ShieldAlert size={11} class="shrink-0 text-amber-400" />
+        <ShieldAlert size={10} class="shrink-0 text-amber-400" />
       {:else if numericValue > 20}
-        <TrendingUp size={11} class="shrink-0 text-emerald-400" />
+        <TrendingUp size={10} class="shrink-0 text-emerald-400" />
       {:else if numericValue < -20}
-        <TrendingDown size={11} class="shrink-0 text-rose-400" />
+        <TrendingDown size={10} class="shrink-0 text-rose-400" />
       {/if}
       <span>{formattedText}</span>
     {:else}
@@ -58,7 +62,7 @@
   
   {#if score && depth}
     <span class="text-[9px] text-slate-600 font-bold shrink-0 lowercase" title="탐색 분석 깊이(Depth)">
-      d{depth}
+      d{depth}{source === 'db' ? ' (db)' : ''}
     </span>
   {/if}
 </div>

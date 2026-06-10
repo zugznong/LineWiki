@@ -27,6 +27,16 @@ describe('ChessJsEngineAdapter Tests', () => {
       expect(adapter.validateFen('')).toBe(false);
       expect(adapter.validateFen(null as any)).toBe(false);
     });
+
+    it('should invalidate impossible positions such as a black king being attacked when it is white to move', () => {
+      // White to move ('w') but black king (e8) is under attack by White rook (e2)
+      const whiteToMoveBlackAttacked = '4k3/8/8/8/8/8/4R3/4K3 w - - 0 1';
+      expect(adapter.validateFen(whiteToMoveBlackAttacked)).toBe(false);
+
+      // Black to move ('b') but white king (e1) is under attack by Black rook (e2)
+      const blackToMoveWhiteAttacked = '4k3/8/8/8/8/8/4r3/4K3 b - - 0 1';
+      expect(adapter.validateFen(blackToMoveWhiteAttacked)).toBe(false);
+    });
   });
 
   describe('isCheck / isCheckmate / isDraw', () => {

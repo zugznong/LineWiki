@@ -22,7 +22,7 @@
   });
 </script>
 
-<div class="p-3 bg-slate-950/40 border border-slate-900 rounded-xl space-y-3" id="board-theme-preview">
+<div class="p-3 bg-[var(--color-bg-nested)] border border-[var(--color-border-primary)] rounded-xl space-y-3" id="board-theme-preview">
   <div class="flex items-center justify-between">
     <div class="flex flex-col">
       <span class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">샘플 프리뷰 (Theme Preview)</span>
@@ -43,7 +43,7 @@
 
   <div class="flex justify-center py-2">
     <!-- Mini 4x4 interactive looking chessboard -->
-    <div class="grid grid-cols-4 gap-0 rounded border border-slate-900 shadow-xl overflow-hidden w-[112px] h-[112px]">
+    <div class="grid grid-cols-4 gap-0 rounded border border-[var(--color-border-primary)] shadow-xl overflow-hidden w-[112px] h-[112px]">
       {#each squares as sq}
         <div 
           class="w-7 h-7 relative"

@@ -1,11 +1,13 @@
 /**
- * Stockfish WASM Web Worker for LineWiki Open Beta 0
+ * Stockfish-compatible local analysis worker for LineWiki Open Beta 0
  * 
- * Executes the Stockfish static/wasm runtime script inside a background thread.
+ * Executes the Stockfish-compatible static mock runtime script inside a background thread.
  * If the static file import succeeds, delegates all UCI messages to the imported
  * StockfishLocalMockEngine. Fallbacks to a robust local heuristic evaluator
  * if the script loader is unavailable.
  */
+
+import { STOCKFISH_JS_PATH } from '../lib/config/runtimeConfig';
 
 // Let's define the local fallback engine in case importScripts fail
 class LocalFallbackEngine {
@@ -20,8 +22,8 @@ class LocalFallbackEngine {
     const trimmed = cmd.trim();
 
     if (trimmed === 'uci') {
-      this.postMessageCallback('id name Stockfish 16.1 WASM (LineWiki Fallback)');
-      this.postMessageCallback('id author The Stockfish Developers & LineWiki');
+      this.postMessageCallback('id name LineWiki Local Heuristics Fallback');
+      this.postMessageCallback('id author LineWiki Fallback Implementation');
       this.postMessageCallback('option name Hash type spin default 16 min 1 max 33554432');
       this.postMessageCallback('option name Threads type spin default 1 min 1 max 1024');
       this.postMessageCallback('uciok');
@@ -121,17 +123,68 @@ class LocalFallbackEngine {
   }
 }
 
+type WorkerScopeWithStockfish = typeof globalThis & {
+  importScripts?: (...urls: string[]) => void;
+  postMessage: (message: string) => void;
+  STOCKFISH?: () => {
+    postMessage?: (cmd: string) => void;
+    onmessage?: (eventOrMsg: MessageEvent | string) => void;
+  };
+  StockfishLocalMockEngine?: new (
+    postMessageCallback: (msg: string) => void
+  ) => {
+    onMessage: (cmd: string) => void;
+  };
+};
+
+const workerScope = self as unknown as WorkerScopeWithStockfish;
+
 // Global engine instance reference
 const engineInstance = new LocalFallbackEngine((msg: string) => {
-  self.postMessage(msg);
+  workerScope.postMessage(msg);
 });
+
+let realStockfishEngine: any = null;
+
+try {
+  // STOCKFISH_JS_PATH는 src/lib/config/runtimeConfig.ts의 정적 mock/future Stockfish script 경로와 대응됩니다.
+  if (typeof workerScope.importScripts !== 'function') {
+    throw new Error('importScripts is unavailable in this worker environment.');
+  }
+
+  workerScope.importScripts(STOCKFISH_JS_PATH);
+
+  if (typeof workerScope.STOCKFISH === 'function') {
+    realStockfishEngine = workerScope.STOCKFISH();
+    realStockfishEngine.onmessage = (eventOrMsg: MessageEvent | string) => {
+      const data =
+        typeof eventOrMsg === 'object' && eventOrMsg !== null && 'data' in eventOrMsg
+          ? eventOrMsg.data
+          : eventOrMsg;
+
+      if (typeof data === 'string') {
+        workerScope.postMessage(data);
+      }
+    };
+  } else if (typeof workerScope.StockfishLocalMockEngine === 'function') {
+    realStockfishEngine = new workerScope.StockfishLocalMockEngine((msg: string) => {
+      workerScope.postMessage(msg);
+    });
+  }
+} catch (err) {
+  // 실제 Stockfish 리소스가 배포되지 않았거나 module worker 환경에서 importScripts가 막힌 경우,
+  // 아래 message handler에서 LocalFallbackEngine을 사용합니다.
+  console.info('Stockfish JS load deferred or fallback used. Using Local Heuristics engine.', err);
+}
 
 // Setup the message handler
 self.onmessage = (event: MessageEvent) => {
   const cmd = event.data;
   if (typeof cmd !== 'string') return;
 
-  if (engineInstance && typeof engineInstance.onMessage === 'function') {
+  if (realStockfishEngine && typeof realStockfishEngine.postMessage === 'function') {
+    realStockfishEngine.postMessage(cmd);
+  } else if (engineInstance && typeof engineInstance.onMessage === 'function') {
     engineInstance.onMessage(cmd);
   }
 };

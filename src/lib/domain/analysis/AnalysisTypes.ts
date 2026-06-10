@@ -15,4 +15,22 @@ export interface EngineMoveEvaluation {
   moveUci: string;
   score: EvalScore | null;
   depth: Depth;
+  source?: 'db' | 'local' | 'fallback';
+  trustedDepth?: number;
+  createdAt?: string;
+  updatedAt?: string;
 }
+
+export type EvaluationSourcePriority = 'db' | 'local';
+
+export interface MergedMoveEvaluation {
+  moveUci: string;
+  moveSan: string;
+  score: EvalScore | null;
+  depth: Depth;
+  source: 'db' | 'local' | 'fallback';
+  trustedDepth?: number;
+  createdAt?: string;
+  updatedAt?: string;
+}
+

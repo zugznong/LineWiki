@@ -1,4 +1,5 @@
 import type { LineHistoryPort } from '../../ports/LineHistoryPort';
+import type { LineSessionPort } from '../../ports/LineSessionPort';
 import type { Result } from '../../utils/result';
 import type { LineHistoryItem } from '../../domain/chess/LineHistory';
 import { success } from '../../utils/result';
@@ -6,14 +7,17 @@ import { success } from '../../utils/result';
 let isFirstExecution = true;
 
 export class RestoreLineHistoryUseCase {
-  constructor(private readonly lineHistoryPort: LineHistoryPort) {}
+  constructor(
+    private readonly lineHistoryPort: LineHistoryPort,
+    private readonly lineSessionPort: LineSessionPort
+  ) {}
 
-  public execute(): Result<LineHistoryItem[], Error> {
+  public execute(currentPath?: string): Result<LineHistoryItem[], Error> {
     // 1. 공유 링크 직접 진입 시 기존 히스토리 초기화 및 빈 상태 반환
-    if (typeof window !== 'undefined' && isFirstExecution) {
+    if (isFirstExecution) {
       isFirstExecution = false;
-      const startedFromApp = sessionStorage.getItem('linewiki.session.startedFromApp');
-      const pathname = window.location.pathname;
+      const startedFromApp = this.lineSessionPort.isStartedFromApp();
+      const pathname = currentPath || (typeof window !== 'undefined' ? window.location.pathname : '');
       if (pathname.includes('/fen/') && !startedFromApp) {
         this.lineHistoryPort.clearHistory();
         return success([]);

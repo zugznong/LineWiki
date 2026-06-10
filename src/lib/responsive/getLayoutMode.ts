@@ -8,6 +8,19 @@ export function getLayoutMode(width: number, height: number): LayoutMode {
     return 'mobile';
   }
   
+  const ratio = height > 0 ? width / height : 1.5;
+
+  if (width >= 1024) {
+    // 1. lowHeightDesktop: height >= 500 && height < 650 && ratio >= 1.9
+    if (height >= 500 && height < 650 && ratio >= 1.9) {
+      return 'lowHeightDesktop';
+    }
+    // 2. compactDesktop: width < 1200 && height >= 600 && height < 685 && ratio >= 1.5
+    if (width < 1200 && height >= 600 && height < 685 && ratio >= 1.5) {
+      return 'compactDesktop';
+    }
+  }
+
   if (height < 600) {
     return 'short-height';
   }

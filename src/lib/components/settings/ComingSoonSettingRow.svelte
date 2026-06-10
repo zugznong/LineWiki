@@ -7,7 +7,7 @@
   }>();
 </script>
 
-<div class="flex items-start justify-between p-3.5 rounded-xl border border-slate-900 bg-slate-950/20 opacity-60 select-none" id="coming-soon-{title.toLowerCase().replace(/[^a-z0-9]/g, '-')}">
+<div class="flex items-start justify-between p-3.5 rounded-xl border border-[var(--color-border-primary)] bg-[var(--color-bg-nested)]/20 opacity-60 select-none" id="coming-soon-{title.toLowerCase().replace(/[^a-z0-9]/g, '-')}">
   <div class="space-y-1">
     <div class="flex items-center gap-1.5">
       <span class="text-xs font-bold text-slate-300">{title}</span>

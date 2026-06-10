@@ -25,6 +25,12 @@ export class UrlFen {
     if (!urlFenStr) {
       return failure(new InvalidFenError('URL FEN 문자열이 비어 있습니다.'));
     }
+    if (urlFenStr.length > 240) {
+      return failure(new InvalidFenError(`URL FEN의 길이가 너무 깁니다. (최대 240자, 현재: ${urlFenStr.length}자)`));
+    }
+    if (!/^[a-zA-Z0-9/_-]+$/.test(urlFenStr)) {
+      return failure(new InvalidFenError('URL FEN에 허용되지 않는 특수문자나 허가되지 않은 기호가 들어갔습니다.'));
+    }
     const decoded = urlFenStr.replace(/_/g, ' ');
     return Fen.create(decoded);
   }

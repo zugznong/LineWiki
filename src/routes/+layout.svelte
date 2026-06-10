@@ -17,12 +17,9 @@
     // Set up viewport tracking
     viewportStore.init();
 
-    // Load initial board settings from localStorage WITHOUT instantiating active engines
-    const settings = storageServices.boardSettings.loadSettings().unwrapOrDefault({
-      theme: 'Classic Green',
-      pieceStyle: 'Unicode',
-      orientation: 'white'
-    });
+    // Load initial board settings using the self-healing use case
+    const settingsResult = storageServices.loadBoardSettings.execute();
+    const settings = settingsResult.unwrap();
     boardStore.init({
       theme: settings.theme,
       pieceStyle: settings.pieceStyle,

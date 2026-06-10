@@ -1,38 +1,43 @@
 <script lang="ts">
   import { localAnalysisStore } from '$lib/stores/localAnalysisStore.svelte.ts';
+  import { evaluationStore } from '$lib/stores/evaluationStore.svelte.ts';
   import { positionStore } from '$lib/stores/positionStore.svelte.ts';
   import { Cpu, Zap, Award, Activity } from '@lucide/svelte';
-  import type { EngineMoveEvaluation } from '$lib/domain/analysis/AnalysisTypes';
+  import type { MergedMoveEvaluation } from '$lib/domain/analysis/AnalysisTypes';
   import type { EvalScore } from '$lib/domain/analysis/EvalScore';
 
   const status = $derived(localAnalysisStore.status);
   const errorMessage = $derived(localAnalysisStore.errorMessage);
-  const evaluations = $derived(localAnalysisStore.evaluations);
+  const evaluations = $derived(evaluationStore.mergedEvaluations);
   const candidateMoves = $derived(localAnalysisStore.candidateMoves);
   
-  // Calculate best move based on evaluations
-  const bestMove = $derived.by(() => {
+  // Calculate sorted evaluations depending on whose turn it is
+  // White wants highest score, Black wants lowest score
+  const sortedEvaluations = $derived.by(() => {
     const evalEntries = Object.values(evaluations);
-    
-    // 후보수별 평가가 충분히 수집된 뒤에만 보드 상 최고 가치를 산정합니다
-    if (candidateMoves.length === 0 || evalEntries.length < candidateMoves.length) {
-      return null;
-    }
-    
     const turn = positionStore.current?.fen.split(' ')[1] || 'w';
     
-    // Sort evaluations depending on whose turn it is
-    // White wants highest score, Black wants lowest score
-    const sorted = [...evalEntries]
-      .filter((e): e is EngineMoveEvaluation & { score: EvalScore } => e.score !== null)
+    return [...evalEntries]
+      .filter((e): e is MergedMoveEvaluation & { score: EvalScore } => e.score !== null)
       .sort((a, b) => {
         // Mate dominates Cp
         const valA = a.score.isMate() ? (a.score.value > 0 ? 10000 + a.score.value : -10000 + a.score.value) : a.score.value;
         const valB = b.score.isMate() ? (b.score.value > 0 ? 10000 + b.score.value : -10000 + b.score.value) : b.score.value;
         return turn === 'w' ? valB - valA : valA - valB;
       });
+  });
+  
+  const isEvaluationComplete = $derived(
+    candidateMoves.length > 0 && Object.keys(evaluations).length >= candidateMoves.length
+  );
+
+  // Calculate best move based on evaluations
+  const bestMove = $derived.by(() => {
+    if (candidateMoves.length === 0) {
+      return null;
+    }
     
-    return sorted[0] || null;
+    return sortedEvaluations[0] || null;
   });
 
   // Calculate highest depth achieved
@@ -42,10 +47,10 @@
   });
 </script>
 
-<div class="flex-1 flex flex-col h-full bg-slate-900/10 min-h-0" id="engine-panel">
+<div class="flex-1 flex flex-col h-full bg-transparent min-h-0" id="engine-panel">
   
   <!-- 상단 스테이터스 파트 -->
-  <div class="flex items-center justify-between px-4 py-3 border-b border-slate-900 bg-slate-950/20 shrink-0">
+  <div class="flex items-center justify-between px-4 py-3 border-b border-[var(--color-border-primary)] bg-[var(--color-bg-nested)] shrink-0">
     <div class="flex items-center gap-2 text-xs font-bold text-slate-300">
       <Cpu size={14} class={status === 'analyzing' ? 'text-emerald-400 animate-spin' : 'text-slate-500'} />
       {#if status === 'error'}
@@ -78,10 +83,10 @@
 
   <!-- 분석 계기판 대시보드 메타 정보 영역 (Depth, Best MOVE, Status) -->
   {#if status !== 'idle' && status !== 'error'}
-    <div class="px-4 py-3 bg-slate-950/40 border-b border-slate-900 grid grid-cols-2 gap-3 shrink-0" id="engine-metrics-box">
+    <div class="px-4 py-3 bg-[var(--color-bg-surface)] border-b border-[var(--color-border-primary)] grid grid-cols-2 gap-3 shrink-0" id="engine-metrics-box">
       
       <!-- 도달 최장 Depth -->
-      <div class="flex items-center gap-2 bg-slate-900/40 border border-slate-800/60 p-2 rounded-lg">
+      <div class="flex items-center gap-2 bg-[var(--color-bg-card)] border border-[var(--color-border-primary)] p-2 rounded-lg">
         <Activity size={14} class="text-emerald-400" />
         <div class="flex flex-col select-none">
           <span class="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Depth</span>
@@ -96,14 +101,23 @@
       </div>
 
       <!-- 실시간 추천 Best Line 정보 -->
-      <div class="flex items-center gap-2 bg-slate-900/40 border border-slate-800/60 p-2 rounded-lg">
+      <div class="flex items-center gap-2 bg-[var(--color-bg-card)] border border-[var(--color-border-primary)] p-2 rounded-lg">
         <Award size={14} class="text-amber-400" />
         <div class="flex flex-col select-none">
-          <span class="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Best Move</span>
-          <span class="text-xs font-mono font-extrabold text-slate-100">
+          <span class="text-[10px] text-slate-500 font-bold uppercase tracking-wider">
+            {#if isEvaluationComplete}Best Move{:else}Current Best{/if}
+          </span>
+          <span class="text-xs font-mono font-extrabold text-slate-100 flex items-center flex-wrap gap-1">
             {#if bestMove}
               <span class="text-emerald-400">{bestMove.moveSan}</span>
               <span class="text-[10px] text-slate-500 font-normal">({bestMove.score.format()})</span>
+              {#if bestMove.source === 'db'}
+                <span class="text-[9px] bg-sky-500/10 text-sky-400 px-1 py-0.2 rounded font-bold border border-sky-500/20 select-none">DB</span>
+              {:else if bestMove.source === 'local'}
+                <span class="text-[9px] bg-emerald-500/10 text-emerald-400 px-1 py-0.2 rounded font-bold border border-emerald-500/20 select-none">Local</span>
+              {:else if bestMove.source === 'fallback'}
+                <span class="text-[9px] bg-slate-500/10 text-slate-400 px-1 py-0.2 rounded font-bold border border-slate-500/20 select-none">Fallback</span>
+              {/if}
             {:else}
               분석 중...
             {/if}
@@ -134,14 +148,14 @@
 
     <!-- 진행 상황 파이/게이지 플로우 -->
     {#if status === 'analyzing'}
-      <div class="bg-slate-950/30 border border-slate-900 p-3 rounded-xl space-y-2">
+      <div class="bg-[var(--color-bg-nested)] border border-[var(--color-border-primary)] p-3 rounded-xl space-y-2">
         <div class="flex justify-between items-center text-xs">
           <span class="text-slate-400 font-medium">연산 완료 흐름</span>
           <span class="font-mono font-bold text-emerald-400">
             {Object.keys(evaluations).length} / {candidateMoves.length}
           </span>
         </div>
-        <div class="w-full bg-slate-800/60 rounded-full h-1.5 overflow-hidden">
+        <div class="w-full bg-[var(--color-bg-panel)] rounded-full h-1.5 overflow-hidden">
           <div class="bg-emerald-500 h-1.5 rounded-full transition-all duration-300" 
                style="width: {candidateMoves.length > 0 ? (Object.keys(evaluations).length / candidateMoves.length) * 100 : 0}%">
           </div>
@@ -153,29 +167,29 @@
         <span>현재 포지션의 모든 후보 수에 대한 분석을 완수했습니다.</span>
       </div>
     {:else}
-      <div class="bg-slate-950/30 border border-slate-900 p-4 rounded-xl text-xs text-slate-500 text-center">
+      <div class="bg-[var(--color-bg-nested)] border border-[var(--color-border-primary)] p-4 rounded-xl text-xs text-slate-500 text-center">
         체스 게임을 진행하면 엔진 분석이 실시간으로 시작됩니다.
       </div>
     {/if}
 
     <!-- 분석 요약 리스트 -->
-    {#if Object.keys(evaluations).length > 0}
+    {#if sortedEvaluations.length > 0}
       <div class="space-y-2 select-none" id="engine-best-recommendations">
         <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">최적 추천 대응 수 (우수 순서)</span>
-        <div class="divide-y divide-slate-900/50 bg-slate-950/20 border border-slate-900/80 rounded-xl overflow-hidden">
-          {#each Object.values(evaluations)
-            .filter((e): e is EngineMoveEvaluation & { score: EvalScore } => e.score !== null)
-            .sort((a, b) => {
-              const turn = positionStore.current?.fen.split(' ')[1] || 'w';
-              const valA = a.score.isMate() ? (a.score.value > 0 ? 10000 + a.score.value : -10000 + a.score.value) : a.score.value;
-              const valB = b.score.isMate() ? (b.score.value > 0 ? 10000 + b.score.value : -10000 + b.score.value) : b.score.value;
-              return turn === 'w' ? valB - valA : valA - valB;
-            }) as item, idx}
+        <div class="divide-y divide-[var(--color-border-primary)]/50 bg-[var(--color-bg-nested)] border border-[var(--color-border-secondary)]/80 rounded-xl overflow-hidden">
+          {#each sortedEvaluations as item, idx}
             <div class="flex items-center justify-between px-3.5 py-2.5 text-xs">
               <div class="flex items-center gap-2">
                 <span class="font-mono text-[9px] text-slate-600 font-bold w-4">{idx + 1}.</span>
-                <span class="font-mono font-bold text-slate-200 bg-slate-900/60 border border-slate-800/40 px-1.5 py-0.5 rounded text-[11px] min-w-[42px] text-center">{item.moveSan}</span>
+                <span class="font-mono font-bold text-slate-200 bg-[var(--color-bg-card)] border border-[var(--color-border-primary)] px-1.5 py-0.5 rounded text-[11px] min-w-[42px] text-center">{item.moveSan}</span>
                 <span class="text-[10px] text-slate-500 font-mono">({item.moveUci})</span>
+                {#if item.source === 'db'}
+                  <span class="text-[8px] bg-sky-500/10 text-sky-400 px-1 py-0.1 rounded border border-sky-500/20 font-bold select-none">DB</span>
+                {:else if item.source === 'local'}
+                  <span class="text-[8px] bg-emerald-500/10 text-emerald-400 px-1 py-0.1 rounded border border-emerald-500/20 font-bold select-none">Local</span>
+                {:else if item.source === 'fallback'}
+                  <span class="text-[8px] bg-slate-500/10 text-slate-500 px-1 py-0.1 rounded border border-slate-500/20 font-bold select-none">Fallback</span>
+                {/if}
               </div>
               <div class="flex items-center gap-1.5">
                 <span class="text-[10px] text-slate-400 font-mono pl-2">depth {item.depth}</span>

@@ -45,7 +45,8 @@
     
     // Initial sizes calculations
     const bounds = containerElement.getBoundingClientRect();
-    const dims = calculateBoardSize(bounds.width, window.innerHeight - 200);
+    const initHeight = bounds.height || (window.innerHeight - 200);
+    const dims = calculateBoardSize(bounds.width, initHeight);
     boardSize = dims.size;
     squareSize = dims.squareSize;
 
@@ -68,8 +69,12 @@
       positionStore.updateSelectedSquare(null);
     } else if (legalDestinations.includes(sqStr)) {
       // Check if any of the candidate moves for this trajectory require promotion
-      const moves = services.generateCandidateMoves.execute(currentPosition.fen);
-      const matchingMoves = moves.moves.filter(m => m.from === selectedSquare && m.to === sqStr);
+      // Use client-side cached candidateMoves if available to avoid redundant calculation
+      const cachedMoves = positionStore.candidateMoves;
+      const matchingMoves = cachedMoves && cachedMoves.length > 0
+        ? cachedMoves.filter(m => m.from === selectedSquare && m.to === sqStr)
+        : services.generateCandidateMoves.execute(currentPosition.fen).moves.filter(m => m.from === selectedSquare && m.to === sqStr);
+
       const hasPromotion = matchingMoves.some(m => m.promotion);
       const promotionValue = hasPromotion ? 'q' : undefined;
 
@@ -89,9 +94,12 @@
     } else {
       const piece = getPieceAt(file, rank);
       if (piece && piece.color === activeColor) {
-        // Generate possible legal destinations
-        const moves = services.generateCandidateMoves.execute(currentPosition.fen);
-        const cellMoves = moves.filterByFromSquare(sqStr);
+        // Generate possible legal destinations using cache first to boost performance
+        const cachedMoves = positionStore.candidateMoves;
+        const cellMoves = cachedMoves && cachedMoves.length > 0
+          ? cachedMoves.filter(m => m.from === sqStr)
+          : services.generateCandidateMoves.execute(currentPosition.fen).filterByFromSquare(sqStr);
+        
         const clickableDests = cellMoves.map(m => m.to);
         
         positionStore.updateSelectedSquare(sqStr, clickableDests);
@@ -108,7 +116,7 @@
 </script>
 
 <div 
-  class="w-full flex-1 flex items-center justify-center p-4 min-h-[300px] border border-slate-900 bg-slate-950/20 rounded-2xl relative"
+  class="w-full flex-1 flex items-center justify-center p-4 min-h-[300px] border border-[var(--color-border-primary)] bg-[var(--color-bg-nested)]/20 rounded-2xl relative"
   bind:this={containerElement}
   id="chess-board-wrapper"
 >

@@ -14,5 +14,6 @@ export const STORAGE_KEYS = {
   THEME: 'linewiki.board.theme',
   PIECE_STYLE: 'linewiki.board.pieceStyle',
   ORIENTATION: 'linewiki.board.orientation',
-  SESSION_HISTORY: 'linewiki.session.history'
+  SESSION_HISTORY: 'linewiki.session.history',
+  STARTED_FROM_APP: 'linewiki.session.startedFromApp'
 } as const;

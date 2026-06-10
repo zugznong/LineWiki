@@ -1,7 +1,7 @@
 /* Analysis Detail Tabs panel groups */
 
 .panel-card {
-  background-color: rgba(15, 23, 42, 0.2); /* slate-900/20 */
+  background-color: var(--color-bg-surface);
   border: 1px solid var(--color-border-primary);
   border-radius: var(--radius-card);
   display: flex;
@@ -20,8 +20,10 @@
 }
 
 #side-panel-content {
-  flex-1: 1 1 0%;
-  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 0%;
+  overflow: hidden;
   min-height: 0;
 }
 
@@ -31,15 +33,37 @@
   flex-direction: column;
   height: 100%;
   min-height: 0;
+  background-color: transparent;
 }
 
-/* Scrollbars configurations inside panels */
-.scrollbar-thin::-webkit-scrollbar {
+/* Settings customizable widgets layout and containment scroll settings */
+#settings-panel {
+  height: 100%;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+#settings-panel,
+.scrollbar-thin,
+#engine-summary-area,
+#candidate-move-list {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-border-secondary) transparent;
+}
+
+#settings-panel::-webkit-scrollbar,
+.scrollbar-thin::-webkit-scrollbar,
+#engine-summary-area::-webkit-scrollbar,
+#candidate-move-list::-webkit-scrollbar {
   width: 4px;
 }
 
-.scrollbar-thin::-webkit-scrollbar-thumb {
-  background-color: rgba(30, 41, 59, 1);
+#settings-panel::-webkit-scrollbar-thumb,
+.scrollbar-thin::-webkit-scrollbar-thumb,
+#engine-summary-area::-webkit-scrollbar-thumb,
+#candidate-move-list::-webkit-scrollbar-thumb {
+  background-color: var(--color-border-secondary);
   border-radius: 99px;
 }
 

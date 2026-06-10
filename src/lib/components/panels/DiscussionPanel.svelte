@@ -2,8 +2,8 @@
   import { MessageSquare, Lock } from '@lucide/svelte';
 </script>
 
-<div class="flex-1 p-6 flex flex-col justify-center items-center text-center space-y-4 select-none" id="discussion-panel">
-  <div class="relative w-14 h-14 bg-slate-900/80 border border-slate-800 rounded-2xl flex items-center justify-center text-slate-400">
+<div class="flex-1 p-6 flex flex-col justify-center items-center text-center space-y-4 select-none h-full min-h-0 overflow-y-auto scrollbar-thin overscroll-contain" id="discussion-panel">
+  <div class="relative w-14 h-14 bg-[var(--color-bg-card)] border border-[var(--color-border-primary)] rounded-2xl flex items-center justify-center text-slate-400">
     <MessageSquare size={24} class="text-slate-400" />
     <span class="absolute -top-1 -right-1 bg-amber-500 text-slate-950 rounded-full p-0.5">
       <Lock size={10} />

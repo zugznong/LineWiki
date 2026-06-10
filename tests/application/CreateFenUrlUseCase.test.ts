@@ -1,12 +1,14 @@
 import { describe, it, expect, vi } from 'vitest';
 import { CreateFenUrlUseCase } from '../../src/lib/application/chess/CreateFenUrlUseCase';
+import { ChessJsEngineAdapter } from '../../src/lib/adapters/chess/ChessJsEngineAdapter';
 import { Fen } from '../../src/lib/domain/chess/Fen';
 import { FEN_PAGE_PREFIX } from '../../src/lib/config/appConfig';
 import fs from 'fs';
 import path from 'path';
 
 describe('CreateFenUrlUseCase Use Case Tests', () => {
-  const useCase = new CreateFenUrlUseCase();
+  const engine = new ChessJsEngineAdapter();
+  const useCase = new CreateFenUrlUseCase(engine);
 
   it('should generate accurate URL FEN mapping for the standard opening position', () => {
     const startFen = Fen.START_POSITION;
@@ -29,6 +31,18 @@ describe('CreateFenUrlUseCase Use Case Tests', () => {
     const resultUrl = useCase.execute(invalidFen);
 
     expect(resultUrl).toBe('');
+  });
+
+  it('should return empty string for impossible positions such as a black king being attacked when it is white to move', () => {
+    // 1. White to move ('w') but black king (e8) is under attack by White rook (e2)
+    const whiteToMoveBlackAttacked = '4k3/8/8/8/8/8/4R3/4K3 w - - 0 1';
+    const resultUrl1 = useCase.execute(whiteToMoveBlackAttacked);
+    expect(resultUrl1).toBe('');
+
+    // 2. Black to move ('b') but white king (e1) is under attack by Black rook (e2)
+    const blackToMoveWhiteAttacked = '4k3/8/8/8/8/8/4r3/4K3 b - - 0 1';
+    const resultUrl2 = useCase.execute(blackToMoveWhiteAttacked);
+    expect(resultUrl2).toBe('');
   });
 
   it('should successfully convert all positions in examples/positions.json to valid URL-safe paths', () => {

@@ -1,6 +1,8 @@
 import { isBrowser } from '../config/runtimeConfig';
+import { getLayoutMode } from '../responsive/getLayoutMode';
+import type { LayoutMode } from '../responsive/LayoutMode';
 
-export type LayoutModeType = 'mobile' | 'tablet' | 'desktop';
+export type LayoutModeType = LayoutMode;
 
 /**
  * 접속한 단말 기기의 브라우저 화면 해상도, 높이, 실시간 화면 비율, 
@@ -40,37 +42,45 @@ class ViewportStore {
    * 해상도 너비 분기점(768px 미만)을 식별해 모바일 모블 상태 여부를 판단합니다.
    */
   public get isMobile(): boolean {
-    return this.state.width < 768;
+    const mode = this.layoutMode;
+    return mode === 'mobile' || mode === 'mobile-landscape';
   }
 
   /**
    * 768px 이상 1024px 미만 해상도를 타블렛 단말로 정의합니다.
    */
   public get isTablet(): boolean {
-    return this.state.width >= 768 && this.state.width < 1024;
+    return this.layoutMode === 'tablet';
   }
 
   /**
    * 1024px 이상의 고해상도 환경을 데스크톱 표준 뷰로 할당합니다.
    */
   public get isDesktop(): boolean {
-    return this.state.width >= 1024;
+    const mode = this.layoutMode;
+    return mode === 'desktop' || mode === 'desktop-wide' || mode === 'compactDesktop' || mode === 'lowHeightDesktop';
   }
 
   /**
    * 화면 세로가 상대적으로 낮아 압축 스타일 배치가 요구되는 상황(650px 미만)입니다.
    */
   public get isShortHeight(): boolean {
-    return this.state.height < 650;
+    return this.state.height < 650 || this.layoutMode === 'short-height';
+  }
+
+  public get isCompactDesktop(): boolean {
+    return this.layoutMode === 'compactDesktop';
+  }
+
+  public get isLowHeightDesktop(): boolean {
+    return this.layoutMode === 'lowHeightDesktop';
   }
 
   /**
-   * 현재 뷰포트에 의거한 반응형 단말 분류 모드('mobile' | 'tablet' | 'desktop')를 즉시 획득합니다.
+   * 현재 뷰포트에 의거한 반응형 단말 분류 모드를 즉시 획득합니다.
    */
   public get layoutMode(): LayoutModeType {
-    if (this.isMobile) return 'mobile';
-    if (this.isTablet) return 'tablet';
-    return 'desktop';
+    return getLayoutMode(this.state.width, this.state.height);
   }
 
   /**
@@ -79,7 +89,12 @@ class ViewportStore {
    */
   public get boardSize(): number {
     const { width, height } = this.state;
-    if (this.isMobile) {
+    
+    if (this.isLowHeightDesktop) {
+      return Math.max(280, Math.min(width - 320, height - 120, 420));
+    } else if (this.isCompactDesktop) {
+      return Math.max(360, Math.min(width - 360, height - 130, 480));
+    } else if (this.isMobile) {
       // 모바일: 좌우 마진 최소 여백을 뺀 너비와 화면 높이의 42% 중 극소값으로 정원판 수용
       return Math.max(260, Math.min(width - 32, height * 0.42, 440));
     } else if (this.isTablet) {

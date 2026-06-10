@@ -7,22 +7,23 @@
   --color-board-last-move: rgba(186, 202, 43, 0.5);
 
   /* App Backgrounds */
-  --color-bg-base: #020617;      /* slate-950 */
-  --color-bg-surface: #0f172a;   /* slate-900 */
-  --color-bg-panel: #1e293b;     /* slate-800 */
-  --color-bg-card: #0f172a;      /* slate-900 */
-  --color-bg-nested: #020617;    /* slate-950 */
+  --color-bg-base: #312e2b;      /* warm representation base */
+  --color-bg-surface: #262421;   /* warm representation surface */
+  --color-bg-panel: #2a2825;     /* warm representation panel */
+  --color-bg-card: #242321;      /* warm representation card */
+  --color-bg-nested: #1f1e1c;    /* warm representation nested */
 
   /* Foreground & Texts */
   --color-text-primary: #f8fafc; /* slate-50 */
   --color-text-secondary: #cbd5e1; /* slate-300 */
-  --color-text-muted: #64748b;     /* slate-500 */
-  --color-text-inactive: #475569;  /* slate-600 */
+  --color-text-muted: #a8a29e;     /* warm-gray-500 */
+  --color-text-inactive: #615c55;  /* warm-gray-600 */
 
   /* Borders */
-  --color-border-primary: #1e293b; /* slate-800 */
-  --color-border-secondary: #334155; /* slate-700 */
-  --color-border-muted: #1e293b; /* slate-800/40 */
+  --color-border: #4a4742;       /* warm border base */
+  --color-border-primary: #4a4742; /* warm border primary */
+  --color-border-secondary: #5a554f; /* warm border secondary */
+  --color-border-muted: rgba(74, 71, 66, 0.4);
 
   /* Status Codes */
   --color-status-success: #10b981; /* emerald-500 */
@@ -35,8 +36,8 @@
   --color-primary-light: #eeeed2;
   --color-accent: #10b981; /* emerald-500 */
   --color-accent-dark: #047857; /* emerald-700 */
-  --color-brand-dark: #020617; /* slate-950 */
-  --color-brand-surface: #0f172a; /* slate-900 */
-  --color-brand-border: #334155; /* slate-700 */
-  --color-brand-muted: #64748b; /* slate-500 */
+  --color-brand-dark: #1f1e1c;
+  --color-brand-surface: #262421;
+  --color-brand-border: #4a4742;
+  --color-brand-muted: #a8a29e;
 }

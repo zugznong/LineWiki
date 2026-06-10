@@ -2,8 +2,8 @@
   import { Cloud, Lock } from '@lucide/svelte';
 </script>
 
-<div class="flex-1 p-6 flex flex-col justify-center items-center text-center space-y-4 select-none" id="server-panel">
-  <div class="relative w-14 h-14 bg-slate-900/80 border border-slate-800 rounded-2xl flex items-center justify-center text-slate-400">
+<div class="flex-1 p-6 flex flex-col justify-center items-center text-center space-y-4 select-none h-full min-h-0 overflow-y-auto scrollbar-thin overscroll-contain" id="server-panel">
+  <div class="relative w-14 h-14 bg-[var(--color-bg-card)] border border-[var(--color-border-primary)] rounded-2xl flex items-center justify-center text-slate-400">
     <Cloud size={24} class="text-slate-400" />
     <span class="absolute -top-1 -right-1 bg-amber-500 text-slate-950 rounded-full p-0.5" title="제한됨">
       <Lock size={10} />
@@ -23,7 +23,7 @@
   <div class="pt-2 w-full max-w-[200px]">
     <button 
       disabled 
-      class="w-full bg-slate-800 text-slate-500 border border-slate-700/30 px-3 py-2 rounded-xl text-xs font-bold cursor-not-allowed flex items-center justify-center gap-1.5"
+      class="w-full bg-[var(--color-bg-panel)] text-slate-500 border border-[var(--color-border-primary)]/80 px-3 py-2 rounded-xl text-xs font-bold cursor-not-allowed flex items-center justify-center gap-1.5"
       id="server-analyze-btn"
     >
       <Lock size={12} />

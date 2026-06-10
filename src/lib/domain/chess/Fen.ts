@@ -22,6 +22,10 @@ export class Fen {
       return failure(new InvalidFenError('FEN 문자열이 비어 있습니다.'));
     }
 
+    if (fen.length > 240) {
+      return failure(new InvalidFenError(`FEN 문자열의 최대 안전 길이를 초과했습니다. (최대 240자, 입력: ${fen.length}자)`));
+    }
+
     // 1. 언더바(_) 유연 복원 전처리 및 연속된 공백 제거 및 양끝 여백 제거 (정규화)
     let processed = fen.trim();
     if (processed.includes('_')) {
@@ -115,14 +119,22 @@ export class Fen {
       }
     }
 
-    // Halfmove clock 검증
-    if (!/^\d+$/.test(halfmove)) {
-      return failure(new InvalidFenError(`유효하지 않은 halfmove clock 값입니다: ${halfmove}`));
+    // Halfmove clock 검증 (최대 4자리, 최대값 9999 제한)
+    if (!/^\d{1,4}$/.test(halfmove)) {
+      return failure(new InvalidFenError(`유효하지 않거나 너무 긴 halfmove clock 값입니다: ${halfmove}`));
+    }
+    const halfmoveVal = parseInt(halfmove, 10);
+    if (halfmoveVal > 9999) {
+      return failure(new InvalidFenError(`halfmove clock 값이 최대 허용치(9999)를 초과했습니다: ${halfmove}`));
     }
 
-    // Fullmove number 검증
-    if (!/^[1-9]\d*$/.test(fullmove)) {
-      return failure(new InvalidFenError(`유효하지 않은 fullmove number 값입니다: ${fullmove}`));
+    // Fullmove number 검증 (최대 5자리, 최대값 99999 제한)
+    if (!/^[1-9]\d{0,4}$/.test(fullmove)) {
+      return failure(new InvalidFenError(`유효하지 않거나 너무 긴 fullmove number 값입니다: ${fullmove}`));
+    }
+    const fullmoveVal = parseInt(fullmove, 10);
+    if (fullmoveVal > 99999) {
+      return failure(new InvalidFenError(`fullmove number 값이 최대 허용치(99999)를 초과했습니다: ${fullmove}`));
     }
 
     const canonicalFen = `${boardPart} ${activeColor} ${castling} ${enPassant} ${halfmove} ${fullmove}`;

@@ -2,6 +2,7 @@ import { Chess } from 'chess.js';
 import type { ChessEnginePort } from '../../ports/ChessEnginePort';
 import { ChessMove } from '../../domain/chess/ChessMove';
 import { Fen } from '../../domain/chess/Fen';
+import { FenRuleValidator } from '../../domain/chess/FenRuleValidator';
 
 /**
  * chess.js 라이브러리를 캡슐화하여, 도메인 영역인 ChessEnginePort 인터페이스에 맞게
@@ -16,8 +17,16 @@ export class ChessJsEngineAdapter implements ChessEnginePort {
       return false;
     }
     try {
-      new Chess(fen.trim());
-      return true;
+      // 240자 제한, 필드 개수, 기물 개수 및 문자 제한을 통합 적용
+      const fenResult = Fen.create(fen);
+      if (fenResult.isFailure()) {
+        return false;
+      }
+      const fullFenStr = fenResult.unwrap().toString();
+      new Chess(fullFenStr);
+      
+      // 기물 배치 및 차례에 얽힌 체스 규정 위반(불가능한 킹 체크 국면, 인접 킹) 추가 검증
+      return FenRuleValidator.validateLegalSideToMoveState(fullFenStr);
     } catch {
       return false;
     }

@@ -31,7 +31,7 @@
 </script>
 
 <div 
-  class="flex border-b border-slate-900 bg-slate-950/20 px-2 py-1 gap-1 overflow-x-auto scrollbar-none {inlineClass}" 
+  class="flex border-b border-[var(--color-border-primary)] bg-[var(--color-bg-surface)] px-2 py-1 gap-1 overflow-x-auto scrollbar-none {inlineClass}" 
   {id}
   role="tablist"
 >
@@ -47,7 +47,7 @@
       class="flex-1 min-w-[65px] inline-flex flex-col sm:flex-row items-center justify-center gap-1.5 py-2 px-3 rounded-xl text-xs font-bold transition duration-150 select-none cursor-pointer focus:outline-none focus:ring-1 focus:ring-emerald-400/30
         {activeId === t.id 
           ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 shadow-inner' 
-          : 'text-slate-400 hover:bg-slate-900/40 hover:text-slate-200 border border-transparent'}"
+          : 'text-slate-400 hover:bg-[var(--color-bg-nested)] hover:text-slate-200 border border-transparent'}"
       id="tab-btn-{t.id}"
     >
       {#if IconComp}

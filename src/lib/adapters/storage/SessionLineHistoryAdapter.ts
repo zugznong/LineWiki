@@ -14,13 +14,25 @@ export class SessionLineHistoryAdapter implements LineHistoryPort {
       if (!raw) {
         return success([]);
       }
+
+      // 악성 버퍼 또는 데이터 정체 방지 - 100KB 초과 시 파싱하지 않고 초기화
+      if (raw.length > 100 * 1024) {
+        console.warn(`[자가복구 경고] 세션 기보 데이터가 안전 오버헤드 범위를 크게 벗어났습니다. (${raw.length} bytes) 데이터를 자동 정화합니다.`);
+        this.clearHistory();
+        return success([]);
+      }
+
       const decodeResult = LineHistory.deserialize(raw);
       if (decodeResult.isOk()) {
         return success(decodeResult.unwrap().items);
       } else {
-        return failure(decodeResult.unwrapErr());
+        // 역직렬화 실패 또는 오염 발생 시 자가 복구(Clear) 기동
+        console.warn(`[자가복구 경고] 변조되거나 훼손된 세션 데이터가 검출되었습니다. 데이터를 영구 소거 및 정화합니다. 사유:`, decodeResult.unwrapErr().message);
+        this.clearHistory();
+        return success([]);
       }
     } catch (err: any) {
+      this.clearHistory();
       return failure(err);
     }
   }

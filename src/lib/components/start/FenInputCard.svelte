@@ -10,19 +10,30 @@
     e.preventDefault();
     const targetFen = customFen.trim() || DEFAULT_FEN;
     
+    // 매우 긴 길이가 chess.js 내부 검증으로 들어가기 전에 즉시 차단
+    if (targetFen.length > 240) {
+      errorMsg = '유효하지 않은 FEN 포지션 코드입니다. 입력형식을 확인해 주십시오.';
+      return;
+    }
+    
     const chess = getChessServices();
     const storage = getStorageServices();
     const navigation = getNavigationAdapter();
+    
+    // URL 생성 기능 검증 실패 여부를 조기 검증하여 매우 긴 입력 우회 차단
+    const targetUrl = chess.createFenUrl.execute(targetFen);
+    if (!targetUrl) {
+      errorMsg = '유효하지 않은 FEN 포지션 코드입니다. 입력형식을 확인해 주십시오.';
+      return;
+    }
     
     const validationResult = chess.chessEngine.validateFen(targetFen);
     
     if (validationResult) {
       errorMsg = '';
-      if (typeof sessionStorage !== 'undefined') {
-        sessionStorage.setItem('linewiki.session.startedFromApp', 'true');
-      }
+      storage.startLineSession.execute();
       storage.clearLineHistory.execute();
-      navigation.goto(chess.createFenUrl.execute(targetFen));
+      navigation.goto(targetUrl);
     } else {
       errorMsg = '유효하지 않은 FEN 포지션 코드입니다. 입력형식을 확인해 주십시오.';
     }
@@ -33,9 +44,7 @@
     const storage = getStorageServices();
     const navigation = getNavigationAdapter();
     
-    if (typeof sessionStorage !== 'undefined') {
-      sessionStorage.setItem('linewiki.session.startedFromApp', 'true');
-    }
+    storage.startLineSession.execute();
     storage.clearLineHistory.execute();
     navigation.goto(chess.createFenUrl.execute(DEFAULT_FEN));
   }
@@ -46,7 +55,7 @@
   }
 </script>
 
-<div class="bg-slate-900/60 backdrop-blur-xl border border-slate-800 rounded-2xl p-6 md:p-8 shadow-2xl max-w-xl mx-auto" id="fen-input-card">
+<div class="bg-[var(--color-bg-card)]/60 backdrop-blur-xl border border-[var(--color-border-primary)] rounded-2xl p-6 md:p-8 shadow-2xl max-w-xl mx-auto" id="fen-input-card">
   <form onsubmit={handleSubmit} class="space-y-4">
     <div class="space-y-2">
       <div class="flex items-center justify-between">
@@ -64,9 +73,10 @@
       <input 
         id="fen-input"
         type="text" 
+        maxlength="240"
         placeholder="rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
         bind:value={customFen}
-        class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm text-slate-200 placeholder-slate-600 focus:outline-none focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500 transition font-mono"
+        class="w-full bg-[var(--color-bg-nested)] border border-[var(--color-border-primary)] rounded-xl px-4 py-3 text-sm text-slate-200 placeholder-slate-600 focus:outline-none focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500 transition font-mono"
       />
     </div>
 
@@ -89,7 +99,7 @@
       <button 
         type="button"
         onclick={handleLoadDefaultDirectly}
-        class="w-full bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 hover:border-slate-600 font-semibold px-4 py-3.5 rounded-xl flex items-center justify-center gap-2 transition hover:-translate-y-0.5 active:translate-y-0 cursor-pointer"
+        class="w-full bg-[var(--color-bg-panel)] hover:bg-[var(--color-bg-card)] text-slate-200 border border-[var(--color-border-primary)] hover:border-[var(--color-border-secondary)] font-semibold px-4 py-3.5 rounded-xl flex items-center justify-center gap-2 transition hover:-translate-y-0.5 active:translate-y-0 cursor-pointer"
         id="load-default-fen-btn"
       >
         <span>시작 포지션 열기</span>

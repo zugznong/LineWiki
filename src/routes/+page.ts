@@ -8,7 +8,7 @@ export const load: PageLoad = async ({ fetch }) => {
       return { examples };
     }
   } catch (err) {
-    console.error('Failed to load example positions:', err);
+    console.warn('Failed to load example positions:', err);
   }
 
   // Backup fallback initial examples in case of fetch errors

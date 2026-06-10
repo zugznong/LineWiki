@@ -1,21 +1,26 @@
 /* Ultra-Wide Screen Constraints & Layout Scale Guidelines */
 
-@media (min-width: 1536px) {
+@media (min-width: 1536px) and (min-height: 685px) {
   /* Set max scale limits on wide viewport monitors */
   #position-main-area {
     max-width: 1440px;
     margin-left: auto;
     margin-right: auto;
     width: 100%;
+    --col2-width: 340px;
+    --col3-width: 420px;
   }
 
-  /* Stabilize Grid sizes of our triple columns */
+  /* Stabilize Flex & Gap sizes of our triple columns */
   #desktop-3-column-layout {
-    grid-template-columns: 1fr 340px 420px !important;
     gap: 1.75rem !important;
   }
 
   #desktop-3-column-layout #chess-board-wrapper {
+    max-height: 640px !important;
+  }
+
+  #desktop-candidate-col #candidate-move-container {
     max-height: 640px !important;
   }
 }

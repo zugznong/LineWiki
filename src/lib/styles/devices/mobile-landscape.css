@@ -20,14 +20,32 @@
   }
 
   /* Quick fix columns side layout */
-  #mobile-single-flow-layout .grid {
+  #mobile-single-flow-layout #mobile-candidate-moves-container {
     flex-direction: row !important;
-    flex-1: 1 1 0%;
+    flex: 1 1 0% !important;
     min-width: 250px;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+  }
+
+  #mobile-candidate-moves-container #candidate-move-container {
+    max-height: calc(100vh - 120px) !important;
+  }
+
+  #mobile-candidate-moves-container #candidate-move-list {
+    overflow-y: auto !important;
+    min-height: 0 !important;
+    overscroll-behavior: contain !important;
   }
   
   #bottom-panel-container {
     width: 100% !important;
+    max-height: calc(100vh - 96px) !important;
     min-height: 240px !important;
+  }
+
+  #bottom-panel-content {
+    overflow: hidden !important;
   }
 }

@@ -33,11 +33,11 @@ describe('calculateBoardSize Tests', () => {
   });
 
   it('should compute short-height layout size', () => {
-    // Width 1024, Height 500 (Short Height)
+    // Width 900, Height 500 (Short Height)
     // targetSize = clamp(500 - 80, 240, 440) = clamp(420, 240, 440) = 420
     // squareSize = Math.floor(420 / 8) = 52
     // size = 416
-    const board = calculateBoardSize(1024, 500);
+    const board = calculateBoardSize(900, 500);
     expect(board.squareSize).toBe(52);
     expect(board.size).toBe(416);
   });
@@ -66,14 +66,14 @@ describe('calculateBoardSize Tests', () => {
   });
 
   it('should respect height restriction on desktop layout when height is low', () => {
-    // Width 1100, Height 640
+    // Width 1210, Height 640
     // Mode is 'desktop'
-    // targetSize = clamp(1100 - 420, 400, 600) = 600
+    // targetSize = clamp(1210 - 420, 400, 600) = 600
     // heightLimit = 640 - 120 = 520
     // targetSize (600) > heightLimit (520) -> targetSize = clamp(520, 400, 600) = 520
     // squareSize = Math.floor(520 / 8) = 65
     // size = 520
-    const board = calculateBoardSize(1100, 640);
+    const board = calculateBoardSize(1210, 640);
     expect(board.squareSize).toBe(65);
     expect(board.size).toBe(520);
   });
@@ -102,6 +102,28 @@ describe('calculateBoardSize Tests', () => {
     const board = calculateBoardSize(1600, 700);
     expect(board.squareSize).toBe(67);
     expect(board.size).toBe(536);
+  });
+
+  it('should compute compactDesktop size without collapsing below minimum of 360', () => {
+    // Width 1024, Height 600
+    // targetSize = Math.max(360, Math.min(1024 - 360, 600 - 130, 480)) = 470
+    // squareSize = Math.floor(470 / 8) = 58
+    // size = 464
+    const board = calculateBoardSize(1024, 600);
+    expect(board.size).toBeGreaterThanOrEqual(360);
+    expect(board.squareSize).toBe(58);
+    expect(board.size).toBe(464);
+  });
+
+  it('should compute lowHeightDesktop size without collapsing below minimum of 280', () => {
+    // Width 1366, Height 620
+    // targetSize = Math.max(280, Math.min(1366 - 320, 620 - 120, 420)) = 420
+    // squareSize = Math.floor(420 / 8) = 52
+    // size = 416
+    const board = calculateBoardSize(1366, 620);
+    expect(board.size).toBeGreaterThanOrEqual(280);
+    expect(board.squareSize).toBe(52);
+    expect(board.size).toBe(416);
   });
 });
 

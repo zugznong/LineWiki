@@ -1,0 +1,31 @@
+Stockfish Chess Engine WASM/JS Integration
+
+This directory supports client-side chess analysis within the LineWiki platform.
+
+[IMPORTANT NOTE FOR OPEN BETA 0]:
+The native heavyweight "stockfish.wasm" binary is completely excluded from the Open Beta 0 distribution bundle to minimize download size and ensure offline client-first simplicity. This folder contains only a stockfish-compatible mock / fallback JS script ("stockfish.js") and a placeholder text. For true local grandmaster analysis, the user can manually drop a compiled GPLv3 stockfish.wasm into this folder.
+
+1. Fallback / Mock Adapter Build (ACTIVE in Open Beta 0):
+   Utilizes compatible mock adapters and a lightweight local Web Worker heuristic evaluator written in TypeScript/JS, compiled directly into the application wrapper.
+
+2. Standard Stockfish Build (INACTIVE/UPGRADABLE):
+   Supports replacing the placeholder mock scripts with real WebAssembly releases of the official Stockfish Chess Engine, utilizing identical UCI protocol interfaces.
+
+----------------------------------------------------------------------------
+License Information:
+----------------------------------------------------------------------------
+Stockfish is an open-source project licensed under the GNU General Public License v3.0 (GPL-3.0 or later).
+
+You may obtain a copy of the License at:
+https://www.gnu.org/licenses/gpl-3.0.html
+
+----------------------------------------------------------------------------
+Attribution & Sources:
+----------------------------------------------------------------------------
+- Original Stockfish Source Repository:
+  https://github.com/official-stockfish/Stockfish
+
+- Stockfish JS/WASM Compilation and Builds inspired by/derived from:
+  - Official Stockfish WASM Builds or Stockfish.js ports (e.g., https://github.com/nmrugg/stockfish.js)
+  
+All subsequent or coupled modules utilizing these files comply with the GPL-3.0 copyleft requirements.

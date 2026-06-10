@@ -144,5 +144,33 @@ describe('Fen Domain Entity Tests', () => {
     expect(result.isFailure()).toBe(true);
     expect(result.unwrapErr().message).toContain('필드의 개수가 6개를 초과할 수 없습니다');
   });
+
+  it('should fail if halfmove clock is non-numeric, too long or exceeds safety limit (9999)', () => {
+    // 5 digits (too long)
+    const tooLongHalfmove = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 10000 1';
+    const resultLong = Fen.create(tooLongHalfmove);
+    expect(resultLong.isFailure()).toBe(true);
+    expect(resultLong.unwrapErr().message).toContain('유효하지 않거나 너무 긴 halfmove clock 값입니다');
+
+    // exceeds 9999
+    const exceedsHalfmove = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 99999 1';
+    const resultExceeds = Fen.create(exceedsHalfmove);
+    expect(resultExceeds.isFailure()).toBe(true);
+    expect(resultExceeds.unwrapErr().message).toContain('유효하지 않거나 너무 긴 halfmove clock 값입니다');
+  });
+
+  it('should fail if fullmove number has leading zeros, is too long or exceeds safety limit (99999)', () => {
+    // 6 digits (too long)
+    const tooLongFullmove = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 1 100000';
+    const resultLong = Fen.create(tooLongFullmove);
+    expect(resultLong.isFailure()).toBe(true);
+    expect(resultLong.unwrapErr().message).toContain('유효하지 않거나 너무 긴 fullmove number 값입니다');
+
+    // exceeds 99999
+    const exceedsFullmove = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 1 999999';
+    const resultExceeds = Fen.create(exceedsFullmove);
+    expect(resultExceeds.isFailure()).toBe(true);
+    expect(resultExceeds.unwrapErr().message).toContain('유효하지 않거나 너무 긴 fullmove number 값입니다');
+  });
 });
 

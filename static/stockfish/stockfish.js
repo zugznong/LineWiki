@@ -17,8 +17,8 @@ class StockfishLocalMockEngine {
   onMessage(message) {
     const cmd = message.trim();
     if (cmd === 'uci') {
-      this.postMessage('id name LineWiki Local Heuristics Mock (임시 로컬 평가 mock)');
-      this.postMessage('id author The Stockfish Developers & LineWiki');
+      this.postMessage('id name LineWiki Local Heuristics Fallback');
+      this.postMessage('id author LineWiki Fallback Implementation');
       this.postMessage('option name Hash type spin default 16 min 1 max 33554432');
       this.postMessage('option name Threads type spin default 1 min 1 max 1024');
       this.postMessage('uciok');

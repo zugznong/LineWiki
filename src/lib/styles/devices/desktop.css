@@ -2,9 +2,7 @@
 
 @media (min-width: 1024px) {
   #desktop-3-column-layout {
-    display: grid !important;
-    grid-template-columns: 1fr 320px 385px;
-    gap: 1.25rem;
+    display: flex !important;
     align-items: stretch;
     height: 100%;
     min-height: 0;
@@ -24,5 +22,16 @@
     flex-direction: column;
     height: 100%;
     min-height: 0;
+  }
+
+  /* Candidate Moves column layout stabilization */
+  #desktop-candidate-col {
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  #desktop-candidate-col #candidate-move-container {
+    height: 100%;
+    max-height: calc(100vh - 200px);
   }
 }

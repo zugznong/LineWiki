@@ -3,14 +3,34 @@
   import PositionFallback from '$lib/components/position/PositionFallback.svelte';
   import { onMount } from 'svelte';
   import { positionStore } from '$lib/stores/positionStore.svelte.ts';
+  import { sessionHistoryStore } from '$lib/stores/sessionHistoryStore.svelte.ts';
+  import { lineHistoryStore } from '$lib/stores/lineHistoryStore.svelte.ts';
   import { createAppServices } from '$lib/composition/createAppServices';
   import { Fen } from '$lib/domain/chess/Fen';
 
   let { data } = $props();
   let lastAnalyzedFen = '';
 
+  function updateHighlightOnly(fen: string) {
+    let lastMove = null;
+    const historyList = lineHistoryStore.historyItems;
+    if (historyList && historyList.length > 0) {
+      const matched = historyList.slice().reverse().find(item => {
+        const itemNormalized = Fen.create(item.fen).map(f => f.toString()).unwrapOrDefault(item.fen);
+        const posNormalized = Fen.create(fen).map(f => f.toString()).unwrapOrDefault(fen);
+        return itemNormalized === posNormalized;
+      });
+      if (matched && matched.from && matched.to) {
+        lastMove = { from: matched.from, to: matched.to };
+      }
+    }
+    positionStore.setLastMove(lastMove);
+  }
+
   function analyzeFen(fen: string) {
-    if (lastAnalyzedFen === fen) return;
+    if (lastAnalyzedFen === fen) {
+      return;
+    }
     lastAnalyzedFen = fen;
 
     const services = createAppServices();
@@ -20,21 +40,7 @@
       const position = positionRes.unwrap();
       const candidateMoves = services.generateCandidateMoves.execute(fen);
 
-      let lastMove = null;
-      const historyRes = services.restoreLineHistory.execute();
-      if (historyRes.isOk()) {
-        const historyList = historyRes.unwrap();
-        const matched = historyList.slice().reverse().find(item => {
-          const itemNormalized = Fen.create(item.fen).map(f => f.toString()).unwrapOrDefault(item.fen);
-          const posNormalized = Fen.create(position.fen).map(f => f.toString()).unwrapOrDefault(position.fen);
-          return itemNormalized === posNormalized;
-        });
-        if (matched && matched.from && matched.to) {
-          lastMove = { from: matched.from, to: matched.to };
-        }
-      }
-
-      positionStore.setPosition(position, candidateMoves.moves, lastMove);
+      positionStore.setPosition(position, candidateMoves.moves, null);
       
       // Stop current active Stockfish calculation and trigger new layout analysis
       services.stopLocalAnalysis.execute();
@@ -45,8 +51,12 @@
   }
 
   onMount(() => {
+    // 최초 진입 시 명시적으로 lineHistoryStore 세션 히스토리 복원 및 탑바 활성 캐시 구축
+    lineHistoryStore.init();
+
     if (data.isValid && data.fen) {
       analyzeFen(data.fen);
+      updateHighlightOnly(data.fen);
     } else if (!data.isValid) {
       positionStore.setError(data.error || '유효하지 않은 FEN 포지션 코드입니다.');
     }
@@ -58,10 +68,19 @@
     };
   });
 
-  // Keep store in sync when user navigates URLs
+  // 1. URL의 FEN이 변경되었을 때만 분석을 재실행 (동작 캐싱 가드 적용)
   $effect(() => {
     if (data.isValid && data.fen) {
       analyzeFen(data.fen);
+    }
+  });
+
+  // 2. FEN 혹은 세션 히스토리가 실시간으로 갱신될 때 언제나 하이라이트를 즉각 업데이트
+  $effect(() => {
+    if (data.isValid && data.fen) {
+      const _historyVersion = sessionHistoryStore.version;
+      const _items = lineHistoryStore.historyItems;
+      updateHighlightOnly(data.fen);
     }
   });
 </script>

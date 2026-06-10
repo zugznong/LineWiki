@@ -21,7 +21,7 @@
 <div class="inline-flex items-center gap-2" id="board-shortcut-toolbar">
   <button
     onclick={handleFlip}
-    class="bg-slate-900 hover:bg-slate-800 border border-slate-800 px-3 py-2 rounded-xl text-slate-300 hover:text-white transition cursor-pointer flex items-center gap-1.5 text-xs font-semibold select-none"
+    class="bg-[var(--color-bg-card)] hover:bg-[var(--color-bg-panel)] border border-[var(--color-border-primary)] px-3 py-2 rounded-xl text-slate-300 hover:text-white transition cursor-pointer flex items-center gap-1.5 text-xs font-semibold select-none"
     aria-label="보드 플립"
     id="flip-board-btn"
   >
@@ -31,7 +31,7 @@
 
   <button
     onclick={handleOpenSettings}
-    class="bg-slate-900 hover:bg-slate-800 border border-slate-800 px-3 py-2 rounded-xl text-slate-300 hover:text-white transition cursor-pointer flex items-center gap-1.5 text-xs font-semibold select-none"
+    class="bg-[var(--color-bg-card)] hover:bg-[var(--color-bg-panel)] border border-[var(--color-border-primary)] px-3 py-2 rounded-xl text-slate-300 hover:text-white transition cursor-pointer flex items-center gap-1.5 text-xs font-semibold select-none"
     aria-label="보드 설정 열기"
     id="open-settings-shortcut-btn"
   >

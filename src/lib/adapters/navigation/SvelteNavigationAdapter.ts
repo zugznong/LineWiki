@@ -7,13 +7,27 @@ import { isBrowser } from '../../config/runtimeConfig';
  * SvelteKit 전용 navigator가 잘못 평가되어 에러가 발생하는 현상을 사전에 완벽히 방어합니다.
  */
 export class SvelteNavigationAdapter {
+  constructor() {
+    // 단순 명령 전달형 어댑터이므로 별도의 자체 이력 상태나 popstate 가로채기 이벤트를 유지하지 않습니다.
+  }
+
   /**
    * 지정된 프로젝트 내부 경로 또는 외부 URL로 클라이언트 라우트를 안전하게 갱신 이동시킵니다.
    */
   public goto(path: string): void {
+    if (!path) return;
+
+    // 보안 검증 가드: 오직 내부 경로( '/'로 시작)만 수용하며, 하이퍼링크 리디렉션 스키마 및 인젝션 코드 차단
+    if (!path.startsWith('/') || /^(https?:|ftp:|javascript:|file:|data:|\/\/)/i.test(path) || /[<>]/.test(path)) {
+      console.error(`[네비게이션 보안 가드] 허용되지 않는 이상 경로 및 위험 문자 패턴이 감지되어 이동을 거부합니다: ${path}`);
+      return;
+    }
+
     if (isBrowser) {
       try {
-        goto(path);
+        goto(path).catch(err => {
+          console.error(`[네비게이션 오류] 이동 수행 실패:`, err);
+        });
       } catch (err) {
         console.error(`[네비게이션 오류] '${path}' 경로로 이동 중 상호작용 오류가 감지되었습니다:`, err);
       }
@@ -38,13 +52,19 @@ export class SvelteNavigationAdapter {
   }
 
   /**
-   * 브라우저 세션 내에 되돌아갈 수 있는 히스토리 기록이 존재하여 뒤로가기가 성립 가능한지 여부를 조회합니다.
+   * 브라우저의 Window History API 스택을 활용하여 사용자를 다음 탐색 세션 국면으로 보냅니다.
    */
-  public canGoBack(): boolean {
+  public forward(): void {
     if (isBrowser && typeof window !== 'undefined' && window.history) {
-      return window.history.length > 1;
+      try {
+        window.history.forward();
+      } catch (err) {
+        console.error('[히스토리 포워드 오류] 다음 페이지로 앞으로가기 실행 중 예외가 발생했습니다:', err);
+      }
+    } else {
+      console.warn('[히스토리 포워드 경고] 서버 환경이거나 History 객체 접근불가 상태이므로 앞으로가기 액션을 중단합니다.');
     }
-    return false;
   }
 }
+
 

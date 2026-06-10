@@ -12,5 +12,7 @@ export const isCloudflarePages = typeof (globalThis as any).process !== 'undefin
 
 // Stockfish static paths
 export const STOCKFISH_STATIC_DIR = '/stockfish';
-export const STOCKFISH_WASM_PATH = '/stockfish/stockfish.wasm';
+// STOCKFISH_WASM_PATH is a future-setup path for eventual WASM engine. 
+// It is intentionally commented out for Open-Beta 0 where only Local Heuristics/JS engine is integrated.
+// export const STOCKFISH_WASM_PATH = '/stockfish/stockfish.wasm';
 export const STOCKFISH_JS_PATH = '/stockfish/stockfish.js';

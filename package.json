@@ -14,7 +14,8 @@
     "preview": "vite preview --port 3000",
     "prepare": "svelte-kit sync",
     "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
-    "test": "vitest run"
+    "test": "vitest run",
+    "preinstall": "node -e \"if (!/pnpm/.test(process.env.npm_execpath || '')) { console.warn('\\u001b[33m[GUIDE] Linewiki relies on pnpm for deterministic dependency resolution. Please run \\u001b[1m' + 'pnpm install' + '\\u001b[22m to ensure correct results.\\u001b[0m'); }\""
   },
   "dependencies": {
     "chess.js": "1.4.0",

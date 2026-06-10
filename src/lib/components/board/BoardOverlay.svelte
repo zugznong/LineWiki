@@ -15,7 +15,7 @@
   );
 </script>
 
-<div class="absolute inset-0 bg-slate-950/85 backdrop-blur-sm z-50 flex flex-col items-center justify-center p-6 text-center animate-fade-in" id="board-overlay">
+<div class="absolute inset-0 bg-[var(--color-bg-nested)]/85 backdrop-blur-sm z-50 flex flex-col items-center justify-center p-6 text-center animate-fade-in" id="board-overlay">
   <div class="space-y-4 max-w-xs">
     <div class="text-xs uppercase tracking-widest text-emerald-400 font-bold">연구 세션 종료</div>
     <h3 class="text-2xl font-bold text-white tracking-tight">{resultTitle}</h3>

@@ -11,7 +11,7 @@
 
 <div class="space-y-5" id="board-settings-panel">
   <!-- 현재 보드 메인 정보 및 활성 상태 -->
-  <div class="bg-slate-900/10 border border-slate-900/60 rounded-xl p-4 space-y-3">
+  <div class="bg-[var(--color-bg-card)]/30 border border-[var(--color-border-primary)]/60 rounded-xl p-4 space-y-3">
     <div class="flex items-center gap-1.5 text-xs font-bold text-slate-400 uppercase tracking-widest">
       <Settings2 size={13} class="text-emerald-400" />
       <span>활성 그래픽 엔진 설정</span>
@@ -19,13 +19,13 @@
 
     <div class="grid grid-cols-2 gap-2">
       <!-- Active Theme Info -->
-      <div class="bg-slate-950/30 border border-slate-900 p-2.5 rounded-lg flex flex-col justify-center">
+      <div class="bg-[var(--color-bg-nested)]/30 border border-[var(--color-border-primary)] p-2.5 rounded-lg flex flex-col justify-center">
         <span class="text-[9px] text-slate-500 font-extrabold uppercase tracking-wider">주 테마</span>
         <span class="text-xs font-bold text-slate-200">{currentTheme}</span>
       </div>
 
       <!-- Active Piece Style Info -->
-      <div class="bg-slate-950/30 border border-slate-900 p-2.5 rounded-lg flex flex-col justify-center">
+      <div class="bg-[var(--color-bg-nested)]/30 border border-[var(--color-border-primary)] p-2.5 rounded-lg flex flex-col justify-center">
         <span class="text-[9px] text-slate-500 font-extrabold uppercase tracking-wider">기물 그래픽</span>
         <span class="text-xs font-bold text-slate-200">{currentPieceStyle}</span>
       </div>
