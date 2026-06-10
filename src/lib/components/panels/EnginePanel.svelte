@@ -5,6 +5,7 @@
   import { Cpu, Zap, Award, Activity } from '@lucide/svelte';
   import type { MergedMoveEvaluation } from '$lib/domain/analysis/AnalysisTypes';
   import type { EvalScore } from '$lib/domain/analysis/EvalScore';
+  import { compareEvalsForTurn } from '$lib/domain/analysis/evalSorting';
 
   const status = $derived(localAnalysisStore.status);
   const errorMessage = $derived(localAnalysisStore.errorMessage);
@@ -19,12 +20,7 @@
     
     return [...evalEntries]
       .filter((e): e is MergedMoveEvaluation & { score: EvalScore } => e.score !== null)
-      .sort((a, b) => {
-        // Mate dominates Cp
-        const valA = a.score.isMate() ? (a.score.value > 0 ? 10000 + a.score.value : -10000 + a.score.value) : a.score.value;
-        const valB = b.score.isMate() ? (b.score.value > 0 ? 10000 + b.score.value : -10000 + b.score.value) : b.score.value;
-        return turn === 'w' ? valB - valA : valA - valB;
-      });
+      .sort(compareEvalsForTurn(turn));
   });
   
   const isEvaluationComplete = $derived(
