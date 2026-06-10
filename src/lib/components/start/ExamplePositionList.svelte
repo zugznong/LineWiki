@@ -1,5 +1,6 @@
 <script lang="ts">
   import { getChessServices, getStorageServices, getNavigationAdapter } from '$lib/composition/createAppServices';
+  import { redactFen } from '$lib/utils/safeLog';
   import { ArrowRight, BookOpen, ChevronRight } from '@lucide/svelte';
 
   let { examples = [] } = $props<{
@@ -17,7 +18,7 @@
       storage.clearLineHistory.execute();
       navigation.goto(destinationPath);
     } else {
-      console.warn(`[포지션 이동 오류] 유효하지 않은 FEN 표현식으로 인해 URL 생성이 차단되었습니다: FEN="${fen}"`);
+      console.warn(`[포지션 이동 오류] 유효하지 않은 FEN 표현식으로 인해 URL 생성이 차단되었습니다: ${redactFen(fen)}`);
     }
   }
 </script>

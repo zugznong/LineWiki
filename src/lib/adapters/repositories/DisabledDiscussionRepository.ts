@@ -1,4 +1,5 @@
 import type { DiscussionRepositoryPort, DiscussionComment } from '../../ports/DiscussionRepositoryPort';
+import { redactFen } from '../../utils/safeLog';
 
 /**
  * 실시간 국면별 커뮤니티 전술 토론 보드의 활력 및 트래픽을 대응하기 위해 임시 봉인된 디스커션 레포지토리입니다.
@@ -6,12 +7,12 @@ import type { DiscussionRepositoryPort, DiscussionComment } from '../../ports/Di
  */
 export class DisabledDiscussionRepository implements DiscussionRepositoryPort {
   public async getComments(fen: string): Promise<DiscussionComment[]> {
-    console.warn(`[토론 피드 조회 차단] FEN: ${fen} 의 실시간 토론 피드는 향후 정식 에디션에서 해제됩니다.`);
+    console.warn(`[토론 피드 조회 차단] ${redactFen(fen)} 의 실시간 토론 피드는 향후 정식 에디션에서 해제됩니다.`);
     return Promise.resolve([]);
   }
 
   public async postComment(fen: string, author: string, content: string): Promise<void> {
-    console.warn(`[토론 피드 작성 차단] 작성자: ${author}, FEN: ${fen} 에 대한 댓글 등록이 차단되었습니다. (정식 릴리즈 예정)`);
+    console.warn(`[토론 피드 작성 차단] 작성자: ${author}, ${redactFen(fen)} 에 대한 댓글 등록이 차단되었습니다. (정식 릴리즈 예정)`);
     return Promise.resolve();
   }
 }
