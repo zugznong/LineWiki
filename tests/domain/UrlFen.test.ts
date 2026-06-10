@@ -45,19 +45,22 @@ describe('UrlFen Domain Value Object Tests', () => {
     expect(result.unwrapErr().message).toContain('8행으로 구성되어야 하나');
   });
 
-  it('should fail to restore Standard FEN if string length exceeds limit (240)', () => {
-    const overlyLongStr = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR_w_KQkq_-_0_1' + 'a'.repeat(200);
-    const result = UrlFen.toStandardFen(overlyLongStr);
+  it('should reject URL FEN containing angle brackets', () => {
+    const result = UrlFen.toStandardFen('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR_w_KQkq_-_0_1<script>');
     expect(result.isFailure()).toBe(true);
-    expect(result.unwrapErr().message).toContain('URL FEN의 길이가 너무 깁니다');
+    expect(result.unwrapErr().message).toContain('허용되지 않는');
   });
 
-  it('should fail to restore Standard FEN if invalid characters are present', () => {
-    // Contains script tags or other dangerous symbols like < >
-    const maliciousStr = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR_w_<script>alert(1)</script>';
-    const result = UrlFen.toStandardFen(maliciousStr);
+  it('should reject URL FEN containing control characters', () => {
+    const result = UrlFen.toStandardFen('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR_w_KQkq_-_0_1\n');
     expect(result.isFailure()).toBe(true);
-    expect(result.unwrapErr().message).toContain('URL FEN에 허용되지 않는 특수문자나 허가되지 않은 기호가 들어갔습니다.');
+    expect(result.unwrapErr().message).toContain('제어 문자');
+  });
+
+  it('should reject overlong URL FEN input before Fen parsing', () => {
+    const result = UrlFen.toStandardFen('8/'.repeat(130));
+    expect(result.isFailure()).toBe(true);
+    expect(result.unwrapErr().message).toContain('길이가 너무 깁니다');
   });
 });
 
