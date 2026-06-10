@@ -52,9 +52,9 @@
     }
 
     return () => {
-      // Cleanup analysis on demount
+      // 라우트 이탈 시 분석을 중단하고 백그라운드 워커/타이머를 완전히 해제합니다.
       const services = createAppServices();
-      services.stopLocalAnalysis.execute();
+      services.disposeLocalAnalysis.execute();
     };
   });
 
