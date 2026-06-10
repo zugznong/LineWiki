@@ -166,12 +166,46 @@ export class StockfishWorkerAdapter implements LocalAnalysisPort {
       }
       this.idleCallbackId = null;
     }
+
     this.analysisQueue = [];
     this.currentQueueIndex = -1;
     this.activeMoveUci = '';
     this.currentPhase = 'quick';
-    this.send(StockfishCommandBuilder.stop());
+
+    // stop()은 worker가 없을 때 새 worker를 만들면 안 됩니다.
+    // start()가 새 분석을 시작할 때만 lazy init을 수행합니다.
+    if (this.worker) {
+      this.worker.postMessage(StockfishCommandBuilder.stop());
+    }
+
     localAnalysisStore.stopAnalysis();
+  }
+
+  /**
+   * 분석을 중단하고 Web Worker를 완전히 종료하여 백그라운드 자원을 해제합니다.
+   *
+   * 페이지 이탈(onDestroy) 같은 생애주기 종료 시점에만 호출합니다.
+   * 일반적인 후보수 재분석 전 중단은 stop()을 사용합니다.
+   */
+  public dispose(): void {
+    this.stop();
+
+    if (this.worker) {
+      try {
+        this.worker.postMessage(StockfishCommandBuilder.quit());
+      } catch {
+        // 이미 비정상 종료된 worker라면 quit 전송 실패는 무시합니다.
+      }
+
+      this.worker.onmessage = null;
+      this.worker.onerror = null;
+      this.worker.terminate();
+      this.worker = null;
+    }
+
+    this.onResultCallback = null;
+    this.currentFen = '';
+    this.hasFailed = false;
   }
 
   public onResult(callback: (res: any) => void): void {
@@ -259,19 +293,16 @@ export class StockfishWorkerAdapter implements LocalAnalysisPort {
   }
 
   private executeDeepAnalyzeWithIdleDelay(targetGen: number, targetFen: string): void {
-    // 이미 큐가 취소되었거나 바뀐 새 시나리오가 시작되었다면 스킵
-    if (
-      targetGen !== this.generation ||
-      targetFen !== this.currentFen ||
-      this.currentPhase !== 'deep' || 
-      this.currentQueueIndex < this.MAX_DEEP_PASS_COUNT || 
-      this.currentQueueIndex >= this.analysisQueue.length
-    ) {
+    if (targetGen !== this.generation || targetFen !== this.currentFen) {
       return;
     }
 
     const move = this.analysisQueue[this.currentQueueIndex];
-    if (!move) return;
+    if (!move) {
+      this.activeMoveUci = '';
+      localAnalysisStore.stopAnalysis();
+      return;
+    }
 
     this.activeMoveUci = move.uci;
     if (!this.sendPositionCommand(move.resultingFen)) return;

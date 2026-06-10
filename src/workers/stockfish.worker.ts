@@ -46,6 +46,8 @@ class LocalFallbackEngine {
       clearTimeout(this.analysisTimeout);
       this.analysisTimeout = null;
     }
+
+    this.activeMoveUci = '';
   }
 
   private startAnalysis() {

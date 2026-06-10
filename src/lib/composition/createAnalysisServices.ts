@@ -3,6 +3,7 @@ import { DisabledServerAnalysisAdapter } from '../adapters/analysis/server/Disab
 import { DisabledStoredEvaluationAdapter } from '../adapters/analysis/stored/DisabledStoredEvaluationAdapter';
 import { StartLocalAnalysisUseCase } from '../application/analysis/StartLocalAnalysisUseCase';
 import { StopLocalAnalysisUseCase } from '../application/analysis/StopLocalAnalysisUseCase';
+import { DisposeLocalAnalysisUseCase } from '../application/analysis/DisposeLocalAnalysisUseCase';
 import { GetServerAnalysisStatusUseCase } from '../application/analysis/GetServerAnalysisStatusUseCase';
 import { LoadStoredEvaluationsUseCase } from '../application/analysis/LoadStoredEvaluationsUseCase';
 import { MergeCandidateEvaluationsUseCase } from '../application/analysis/MergeCandidateEvaluationsUseCase';
@@ -26,6 +27,7 @@ export function createAnalysisServices(chessEngine: ChessEnginePort) {
 
   const startLocalAnalysis = new StartLocalAnalysisUseCase(cachedLocalAnalysis, chessEngine);
   const stopLocalAnalysis = new StopLocalAnalysisUseCase(cachedLocalAnalysis);
+  const disposeLocalAnalysis = new DisposeLocalAnalysisUseCase(cachedLocalAnalysis);
   const getServerAnalysisStatus = new GetServerAnalysisStatusUseCase(cachedServerAnalysis);
   const loadStoredEvaluations = new LoadStoredEvaluationsUseCase(cachedStoredEvaluation);
   const mergeCandidateEvaluations = new MergeCandidateEvaluationsUseCase();
@@ -37,6 +39,7 @@ export function createAnalysisServices(chessEngine: ChessEnginePort) {
     storedEvaluation: cachedStoredEvaluation,
     startLocalAnalysis,
     stopLocalAnalysis,
+    disposeLocalAnalysis,
     getServerAnalysisStatus,
     loadStoredEvaluations,
     mergeCandidateEvaluations,

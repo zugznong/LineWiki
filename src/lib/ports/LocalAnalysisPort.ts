@@ -9,9 +9,16 @@ export interface LocalAnalysisPort {
   start(fen: string, candidateMoves?: any[]): void;
 
   /**
-   * 가동 중인 로컬 백그라운드 분석 스레드 연산을 즉시 중단해 브라우저 자원을 릴리즈합니다.
+   * 가동 중인 로컬 백그라운드 분석 스레드 연산을 즉시 중단합니다.
+   *
+   * 단, stop()은 재시작 가능성을 남기며 Web Worker 자체를 반드시 종료하지는 않습니다.
    */
   stop(): void;
+
+  /**
+   * 페이지 이탈 등 생애주기 정리 시점에 로컬 분석기 리소스를 완전히 해제합니다.
+   */
+  dispose(): void;
 
   /**
    * 로컬 분석기에서 연산되어 나오는 실시간 depth, score, 주행 경로(PV) 정보를 포함한

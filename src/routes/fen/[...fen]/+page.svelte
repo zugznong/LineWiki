@@ -62,9 +62,9 @@
     }
 
     return () => {
-      // Cleanup analysis on demount
+      // 페이지 이탈 시에는 stop이 아니라 dispose로 worker 자원까지 정리합니다.
       const services = createAppServices();
-      services.stopLocalAnalysis.execute();
+      services.disposeLocalAnalysis.execute();
     };
   });
 
