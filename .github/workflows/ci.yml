@@ -1,0 +1,44 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+# 동일 브랜치/PR에서 새 푸시가 오면 진행 중인 실행을 취소해 자원을 절약합니다.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # packageManager 필드(pnpm@11.5.2)를 읽어 동일 버전 pnpm을 설치합니다.
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Type check
+        run: pnpm check
+
+      - name: Unit tests
+        run: pnpm test
+
+      # moderate 이상 취약점이 있으면 실패합니다. 현재 cookie<0.7.0(low)는 통과합니다.
+      - name: Dependency audit
+        run: pnpm audit --audit-level moderate
+
+      - name: Build
+        run: pnpm build
