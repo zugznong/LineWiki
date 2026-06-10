@@ -1,4 +1,5 @@
 import type { StatsRepositoryPort, PositionStats } from '../../ports/StatsRepositoryPort';
+import { redactFen } from '../../utils/safeLog';
 
 /**
  * 실전 기보 및 오프닝 분석 마스터즈 빅데이터 통계 레포지토리의 비활성화 격리 어댑터입니다.
@@ -6,7 +7,7 @@ import type { StatsRepositoryPort, PositionStats } from '../../ports/StatsReposi
  */
 export class DisabledStatsRepository implements StatsRepositoryPort {
   public async getStats(fen: string): Promise<PositionStats | null> {
-    console.warn(`[실전 통계 조회 비활성화] FEN: ${fen} 에 대한 Lichess 빅데이터 전술 지표 응답이 오프라인 사유로 임시 봉인되었습니다.`);
+    console.warn(`[실전 통계 조회 비활성화] ${redactFen(fen)} 에 대한 Lichess 빅데이터 전술 지표 응답이 오프라인 사유로 임시 봉인되었습니다.`);
     return Promise.resolve(null);
   }
 }

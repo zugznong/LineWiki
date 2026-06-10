@@ -1,5 +1,6 @@
 import type { ServerAnalysisPort } from '../../../ports/ServerAnalysisPort';
 import { ServerAnalysisStatus } from '../../../domain/analysis/ServerAnalysisStatus';
+import { redactFen } from '../../../utils/safeLog';
 
 /**
  * 고비용 고성능 원격 서버 분석 인터페이스의 임시 비활성화를 처리하기 위한 어댑터입니다.
@@ -22,7 +23,8 @@ export class DisabledServerAnalysisAdapter implements ServerAnalysisPort {
    * 서버 분석 시도가 발생할 경우 네트워크 패킷 전송을 사전에 격리 및 무효화합니다.
    */
   public async requestAnalysis(fen: string): Promise<void> {
-    console.warn(`[서버 분석 호출 차단] 입력한 FEN: ${fen} 에 대한 서버 분석 실행 요청이 오픈베타 정책 사유로 취소되었습니다.`);
+    // 원본 FEN(사용자 연구 국면)을 로그에 남기지 않도록 비식별 토큰으로 치환합니다.
+    console.warn(`[서버 분석 호출 차단] ${redactFen(fen)} 에 대한 서버 분석 요청이 오픈베타 정책 사유로 취소되었습니다.`);
     return Promise.resolve();
   }
 }

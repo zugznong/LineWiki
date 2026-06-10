@@ -1,4 +1,5 @@
 import type { NoteRepositoryPort } from '../../ports/NoteRepositoryPort';
+import { redactFen } from '../../utils/safeLog';
 
 /**
  * 이용자 체스 국면 메모 및 개인 노트 보관 처리를 위한 임시 대기용 레포지토리입니다.
@@ -7,12 +8,12 @@ import type { NoteRepositoryPort } from '../../ports/NoteRepositoryPort';
  */
 export class DisabledNoteRepository implements NoteRepositoryPort {
   public async getNotes(fen: string): Promise<string[]> {
-    console.warn(`[노트 조회 비활성화] FEN: ${fen} 에 매핑된 개인 노트 열람 장치가 오픈베타 기간 동안 비활성화되었습니다. (Coming later)`);
+    console.warn(`[노트 조회 비활성화] ${redactFen(fen)} 에 매핑된 개인 노트 열람 장치가 오픈베타 기간 동안 비활성화되었습니다. (Coming later)`);
     return Promise.resolve([]);
   }
 
   public async saveNote(fen: string, note: string): Promise<void> {
-    console.warn(`[노트 저장 비활성화] FEN: ${fen} 에 개인 노트를 저장하려 했으나 기능이 아직 닫혀있습니다. (Coming later)`);
+    console.warn(`[노트 저장 비활성화] ${redactFen(fen)} 에 개인 노트를 저장하려 했으나 기능이 아직 닫혀있습니다. (Coming later)`);
     return Promise.resolve();
   }
 }
