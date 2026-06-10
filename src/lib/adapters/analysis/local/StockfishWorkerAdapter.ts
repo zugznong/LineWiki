@@ -1,7 +1,7 @@
 import type { LocalAnalysisPort } from '$lib/ports/LocalAnalysisPort';
 import { isBrowser } from '$lib/config/runtimeConfig';
 import { localAnalysisStore } from '$lib/stores/localAnalysisStore.svelte.ts';
-import { StockfishCommandBuilder } from './StockfishCommandBuilder';
+import { StockfishCommandBuilder, UnsafeUciCommandError } from './StockfishCommandBuilder';
 import { StockfishMessageParser } from './StockfishMessageParser';
 import { EvalScore } from '$lib/domain/analysis/EvalScore';
 
@@ -72,6 +72,23 @@ export class StockfishWorkerAdapter implements LocalAnalysisPort {
     }
     if (this.worker) {
       this.worker.postMessage(cmd);
+    }
+  }
+
+  private sendPositionCommand(fen: string): boolean {
+    try {
+      this.send(StockfishCommandBuilder.setPosition(fen));
+      return true;
+    } catch (err) {
+      if (err instanceof UnsafeUciCommandError) {
+        console.error('[로컬 분석 보안 가드] 안전하지 않은 FEN이 감지되어 UCI position 명령 생성을 차단했습니다.');
+        this.hasFailed = true;
+        localAnalysisStore.setError('안전하지 않은 FEN 입력이 감지되어 로컬 분석을 중단했습니다.');
+        this.clearQueueOnFailure();
+        return false;
+      }
+
+      throw err;
     }
   }
 
@@ -178,7 +195,7 @@ export class StockfishWorkerAdapter implements LocalAnalysisPort {
         
         const move = this.analysisQueue[this.currentQueueIndex];
         this.activeMoveUci = move.uci;
-        this.send(StockfishCommandBuilder.setPosition(move.resultingFen));
+        if (!this.sendPositionCommand(move.resultingFen)) return;
         this.send(StockfishCommandBuilder.goDepth(10));
         return;
       }
@@ -230,7 +247,7 @@ export class StockfishWorkerAdapter implements LocalAnalysisPort {
     this.activeMoveUci = move.uci;
     
     // 후보수 적용 후 국면을 바로 resultingFen으로 세팅하여 전달
-    this.send(StockfishCommandBuilder.setPosition(move.resultingFen));
+    if (!this.sendPositionCommand(move.resultingFen)) return;
     
     if (this.currentPhase === 'quick') {
       // 1단계: 빠른 프리패스를 위해 낮은 Depth 3으로 속사포 평가
@@ -257,7 +274,7 @@ export class StockfishWorkerAdapter implements LocalAnalysisPort {
     if (!move) return;
 
     this.activeMoveUci = move.uci;
-    this.send(StockfishCommandBuilder.setPosition(move.resultingFen));
+    if (!this.sendPositionCommand(move.resultingFen)) return;
     this.send(StockfishCommandBuilder.goDepth(10));
   }
 
