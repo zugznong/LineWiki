@@ -1,5 +1,6 @@
 import { goto } from '$app/navigation';
 import { isBrowser } from '../../config/runtimeConfig';
+import { isSafeInternalPath } from '../../utils/url';
 
 /**
  * SvelteKit의 내장 라우팅 네비게이션 기능과 브라우저 히스토리 조작 제어를 캡슐화한 어댑터입니다.
@@ -12,27 +13,27 @@ export class SvelteNavigationAdapter {
   }
 
   /**
-   * 지정된 프로젝트 내부 경로 또는 외부 URL로 클라이언트 라우트를 안전하게 갱신 이동시킵니다.
+   * 지정된 프로젝트 내부 경로로 클라이언트 라우트를 안전하게 갱신 이동시킵니다.
+   *
+   * 오픈 리다이렉트 및 위험 스킴(javascript:/data:) 차단을 위해 내부 절대경로(/로 시작)만 허용합니다.
+   * FEN이 포함된 경로가 로그에 남지 않도록 실패 로그에는 원본 path를 출력하지 않습니다.
    */
   public goto(path: string): void {
-    if (!path) return;
-
-    // 보안 검증 가드: 오직 내부 경로( '/'로 시작)만 수용하며, 하이퍼링크 리디렉션 스키마 및 인젝션 코드 차단
-    if (!path.startsWith('/') || /^(https?:|ftp:|javascript:|file:|data:|\/\/)/i.test(path) || /[<>]/.test(path)) {
-      console.error(`[네비게이션 보안 가드] 허용되지 않는 이상 경로 및 위험 문자 패턴이 감지되어 이동을 거부합니다: ${path}`);
+    if (!isSafeInternalPath(path)) {
+      console.error('[네비게이션 보안 가드] 허용되지 않는 경로 패턴이 감지되어 이동을 거부합니다.');
       return;
     }
 
     if (isBrowser) {
       try {
         goto(path).catch(err => {
-          console.error(`[네비게이션 오류] 이동 수행 실패:`, err);
+          console.error('[네비게이션 오류] 이동 수행 실패:', err);
         });
       } catch (err) {
-        console.error(`[네비게이션 오류] '${path}' 경로로 이동 중 상호작용 오류가 감지되었습니다:`, err);
+        console.error('[네비게이션 오류] 경로 이동 중 상호작용 오류가 감지되었습니다:', err);
       }
     } else {
-      console.warn(`[네비게이션 경고] 서버 사이드 렌더링(SSR) 구동 단계이므로 '${path}' 이동 요청을 누락 방지 처리합니다.`);
+      console.warn('[네비게이션 경고] 서버 사이드 렌더링(SSR) 구동 단계이므로 이동 요청을 누락 방지 처리합니다.');
     }
   }
 
