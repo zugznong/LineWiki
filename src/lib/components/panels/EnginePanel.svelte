@@ -4,6 +4,7 @@
   import { Cpu, Zap, Award, Activity } from '@lucide/svelte';
   import type { EngineMoveEvaluation } from '$lib/domain/analysis/AnalysisTypes';
   import type { EvalScore } from '$lib/domain/analysis/EvalScore';
+  import { compareEvalsForTurn } from '$lib/domain/analysis/evalSorting';
 
   const status = $derived(localAnalysisStore.status);
   const errorMessage = $derived(localAnalysisStore.errorMessage);
@@ -25,13 +26,8 @@
     // White wants highest score, Black wants lowest score
     const sorted = [...evalEntries]
       .filter((e): e is EngineMoveEvaluation & { score: EvalScore } => e.score !== null)
-      .sort((a, b) => {
-        // Mate dominates Cp
-        const valA = a.score.isMate() ? (a.score.value > 0 ? 10000 + a.score.value : -10000 + a.score.value) : a.score.value;
-        const valB = b.score.isMate() ? (b.score.value > 0 ? 10000 + b.score.value : -10000 + b.score.value) : b.score.value;
-        return turn === 'w' ? valB - valA : valA - valB;
-      });
-    
+      .sort(compareEvalsForTurn(turn));
+
     return sorted[0] || null;
   });
 
@@ -165,12 +161,7 @@
         <div class="divide-y divide-slate-900/50 bg-slate-950/20 border border-slate-900/80 rounded-xl overflow-hidden">
           {#each Object.values(evaluations)
             .filter((e): e is EngineMoveEvaluation & { score: EvalScore } => e.score !== null)
-            .sort((a, b) => {
-              const turn = positionStore.current?.fen.split(' ')[1] || 'w';
-              const valA = a.score.isMate() ? (a.score.value > 0 ? 10000 + a.score.value : -10000 + a.score.value) : a.score.value;
-              const valB = b.score.isMate() ? (b.score.value > 0 ? 10000 + b.score.value : -10000 + b.score.value) : b.score.value;
-              return turn === 'w' ? valB - valA : valA - valB;
-            }) as item, idx}
+            .sort(compareEvalsForTurn(positionStore.current?.fen.split(' ')[1] || 'w')) as item, idx}
             <div class="flex items-center justify-between px-3.5 py-2.5 text-xs">
               <div class="flex items-center gap-2">
                 <span class="font-mono text-[9px] text-slate-600 font-bold w-4">{idx + 1}.</span>
