@@ -13,5 +13,11 @@
     <StartPageHeader />
     <FenInputCard />
     <ExamplePositionList {examples} />
+
+    <footer class="pt-6 text-center">
+      <a href="/privacy" class="text-xs text-slate-500 hover:text-emerald-400 transition underline-offset-4 hover:underline">
+        개인정보 처리방침
+      </a>
+    </footer>
   </div>
 </div>
