@@ -44,7 +44,7 @@
 
 <svelte:window onkeydown={handleKeyDown} />
 
-<div class="flex-1 flex flex-col h-screen overflow-hidden select-none text-slate-100 font-sans" id="position-page-shell">
+<div class="flex-1 flex flex-col h-dvh max-h-dvh min-h-0 overflow-hidden select-none text-slate-100 font-sans" id="position-page-shell">
   {#if storeError}
     <!-- FEN 또는 데이터 로드 상 에러 국면 진입 시의 폴백 화면 처리 -->
     <PositionFallback error={storeError} />

@@ -12,7 +12,10 @@ export const isCloudflarePages = typeof (globalThis as any).process !== 'undefin
 
 // Stockfish static paths
 export const STOCKFISH_STATIC_DIR = '/stockfish';
-// STOCKFISH_WASM_PATH is a future-setup path for eventual WASM engine. 
-// It is intentionally commented out for Open-Beta 0 where only Local Heuristics/JS engine is integrated.
-// export const STOCKFISH_WASM_PATH = '/stockfish/stockfish.wasm';
-export const STOCKFISH_JS_PATH = '/stockfish/stockfish.js';
+export const STOCKFISH_MULTI_JS_PATH = '/stockfish/stockfish-18-lite.js';
+export const STOCKFISH_MULTI_WASM_PATH = '/stockfish/stockfish-18-lite.wasm';
+export const STOCKFISH_SINGLE_JS_PATH = '/stockfish/stockfish-18-lite-single.js';
+export const STOCKFISH_SINGLE_WASM_PATH = '/stockfish/stockfish-18-lite-single.wasm';
+
+// 대체(Fallback) 평가 표시 기본 비활성화 옵션 (기본값 false)
+export const ENABLE_HEURISTIC_FALLBACK_EVALUATIONS = false;

@@ -1,41 +1,38 @@
 <script lang="ts">
-  import { BoardTheme } from '$lib/domain/board/BoardTheme';
+  import type { BoardColors } from '$lib/domain/board/BoardTheme';
 
-  // Classic Green 테마 색상 정의 가져오기 혹은 상수 처리
-  const classicGreen = BoardTheme.getAllThemes().find(t => t.name === 'Classic Green') || {
-    name: 'Classic Green',
-    light: '#eeeed2',
-    dark: '#769656'
-  };
+  let { theme } = $props<{ theme: BoardColors }>();
 
   const miniBoardSize = 4; // 4x4 mini grid for illustrative preview
-  const squares = Array.from({ length: miniBoardSize * miniBoardSize }, (_, i) => {
-    const r = Math.floor(i / miniBoardSize);
-    const c = i % miniBoardSize;
-    const isLight = (r + c) % 2 === 0;
-    return {
-      r,
-      c,
-      color: isLight ? classicGreen.light : classicGreen.dark,
-      isLight
-    };
-  });
+  const squares = $derived(
+    Array.from({ length: miniBoardSize * miniBoardSize }, (_, i) => {
+      const r = Math.floor(i / miniBoardSize);
+      const c = i % miniBoardSize;
+      const isLight = (r + c) % 2 === 0;
+      return {
+        r,
+        c,
+        color: isLight ? theme.light : theme.dark,
+        isLight
+      };
+    })
+  );
 </script>
 
 <div class="p-3 bg-[var(--color-bg-nested)] border border-[var(--color-border-primary)] rounded-xl space-y-3" id="board-theme-preview">
   <div class="flex items-center justify-between">
     <div class="flex flex-col">
       <span class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">샘플 프리뷰 (Theme Preview)</span>
-      <span class="text-xs font-bold text-slate-200">{classicGreen.name}</span>
+      <span class="text-xs font-bold text-slate-200">{theme.name}</span>
     </div>
     
     <div class="flex gap-1.5 text-[10px]">
       <div class="flex items-center gap-1">
-        <span class="w-2.5 h-2.5 rounded border border-slate-950/20" style="background-color: {classicGreen.light};"></span>
+        <span class="w-2.5 h-2.5 rounded border border-slate-950/20" style="background-color: {theme.light};"></span>
         <span class="text-slate-400">Light</span>
       </div>
       <div class="flex items-center gap-1">
-        <span class="w-2.5 h-2.5 rounded border border-slate-950/20" style="background-color: {classicGreen.dark};"></span>
+        <span class="w-2.5 h-2.5 rounded border border-slate-950/20" style="background-color: {theme.dark};"></span>
         <span class="text-slate-400">Dark</span>
       </div>
     </div>

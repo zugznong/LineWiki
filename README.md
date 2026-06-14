@@ -9,7 +9,7 @@ LineWiki는 FEN 하나로 체스 포지션 페이지를 열고, 해당 포지션
 ## 🚀 1. 프로젝트 개요 및 핵심 원칙
 - **URL 중심 설계**: 모든 체스 포지션은 FEN 문자열 자체를 URL에 인코딩(`_` 변환 적용)하여 상태를 복원하고 유일한 링크로 공유가능합니다.
 - **오픈베타 0 (Local Engine & Client-First)**: BaaS, 사용자 로그인, 복잡한 서버 분석 기능을 배제하고, 클라이언트 단독 구동 및 로컬 분석 핵심 경험 설계에 집중합니다.
-- **로컬 분석기**: 오픈베타 0의 로컬 분석기는 대용량 Stockfish WASM 리소스 로드 부담과 브라우저 UI 호환성을 고려하여, **UCI 프로토콜을 온전히 준수하는 Stockfish 호환 mock/fallback 로컬 휴리스틱 분석 엔진**이 탑재되어 있습니다. 웹 워커(Web Worker) 상에서 UI 블로킹 없이 브라우저단 세부 평가 추이를 시뮬레이션 산출해 주며, 정식 배포나 오프라인 버전 전환 시 실제 Stockfish 16 WASM (용량 최적화를 위해 static/stockfish/stockfish.wasm.placeholder.txt로 대체, 가이드에 따라 교체 가능) 엔진 패키지로 직접 교체하기 편리하도록 완전한 UCI 표준 통신 설계(UCI 인터페이스)를 갖추고 있습니다.
+- **로컬 분석기**: 강력한 성능의 **실제 멀티스레드 Stockfish 18 WASM(WebAssembly) 엔진**이 탑재되어 있습니다. 브라우저의 공유 메모리(`SharedArrayBuffer`) 및 보안 제약 사정으로 웹 워커(Web Worker) 가동이 제한되는 경우에는 **싱글스레드 Stockfish 18 Fallback** 모듈로 안전하게 우회 적용하며, 웹 워커 초기화 실패 또는 펜딩 타임아웃 등의 극단적 오작동 상황에 직면하더라도 **로컬 휴리스틱 Fallback 분석기**가 지체 없이 즉각 격상 구동(Event Callback-based Option)되어 체스 기보 계산 분석이 단절되지 않도록 완벽하고 복조적인 이중 안전 회복탄력 설계(Resilient Analysis Pipeline)를 이룩하였습니다.
 - **세션 히스토리**: 브라우저가 유지되는 동안 `sessionStorage`에 실시간으로 수순 이동 히스토리를 저장하여 브라우저 뒤로가기/앞으로가기 및 수순 이동 내역을 기록합니다.
 - **보드 설정**: 테마 및 기물 형태 등 사용자의 개인 설정을 `localStorage`에 정적으로 보존합니다.
 
@@ -47,7 +47,7 @@ LineWiki는 확장성과 안정성을 보장하기 위해 다음과 같은 엄�
 - **`domain/`**: 체스 규칙, 평가 모델, 보드 테마 등 인프라에 결함이 없는 순수 도메인 스키마
 - **`application/`**: UseCase 기반 유저 동작 및 상태 전사 흐름 제어
 - **`ports/`**: 체스 엔진, 로컬 분석, 영속 저장소, 네비게이션 표준 인터페이스 정의
-- **`adapters/`**: `chess.js`, Stockfish 호환 mock/fallback 로컬 휴리스틱 분석기 및 실제 `Stockfish WASM` 통합용 어댑터, 브라우저 Storage 등 구체적인 라이브러리 연동부
+- **`adapters/`**: `chess.js`, 실제 멀티스레드/싱글스레드 `Stockfish 18 WASM` 및 복조형 회복탄력 로컬 휴리스틱 분석기, 브라우저 Storage 등 구체적인 구동 바인딩 연동부
 - **`styles/`**: 기기별 반응형 쿼리 및 UI 전반 토큰 최적화
 
 ---

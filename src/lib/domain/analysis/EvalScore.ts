@@ -12,18 +12,11 @@ export class EvalScore {
       return `${prefix}${Math.abs(this.value)}`;
     }
     const score = this.value / 100;
-    if (score === 0) return '0.0';
+    if (Math.abs(score) < 0.005) return '0.00';
     const sign = score > 0 ? '+' : '';
     
-    // To match cleaner output formats like +0.4 instead of +0.40,
-    // we format to a clean floating representation.
-    let finalScore = score.toFixed(2);
-    if (finalScore.endsWith('.00')) {
-      finalScore = finalScore.slice(0, -3);
-    } else if (finalScore.endsWith('0')) {
-      finalScore = finalScore.slice(0, -1);
-    }
-    if (finalScore === '0' || finalScore === '-0') return '0.0';
+    const finalScore = score.toFixed(2);
+    if (finalScore === '-0.00' || finalScore === '0.00') return '0.00';
     return `${sign}${finalScore}`;
   }
 

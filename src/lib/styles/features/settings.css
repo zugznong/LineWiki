@@ -51,3 +51,29 @@
   border-radius: var(--radius-card);
   border: 1px solid var(--color-border-primary);
 }
+
+#board-settings-panel,
+#board-theme-preview,
+#piece-style-preview {
+  max-width: 100%;
+  min-width: 0;
+  overflow-x: hidden;
+  box-sizing: border-box;
+}
+
+/* 
+  모바일/태블릿 기기에서 기물 스타일 리스트가 전체 설정 창의 높이를 독차지하는 UX 파괴를 방지하기 위해 
+  스타일 선택기의 높이 경계와 스크롤 컨테인 설정을 명확히 규정 
+*/
+@media (max-width: 1023px) {
+  #piece-style-selector-container {
+    max-height: 220px !important;
+    overflow-y: auto !important;
+    overscroll-behavior: contain !important; /* 바깥 메인 페이지 스크롤 간섭 및 가로챔 차단 */
+    border: 1px solid var(--color-border-primary);
+    border-radius: var(--radius-card);
+    padding: 0.35rem;
+    background-color: var(--color-bg-nested);
+  }
+}
+

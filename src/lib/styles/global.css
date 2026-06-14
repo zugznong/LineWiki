@@ -8,6 +8,7 @@
 @import "./tokens/z-index.css";
 
 /* 2. Device responsive templates */
+@import "./breakpoints.css";
 @import "./devices/mobile.css";
 @import "./devices/mobile-landscape.css";
 @import "./devices/tablet.css";
@@ -24,33 +25,53 @@
 @import "./features/settings.css";
 
 /* Base Overrides for clean body layout */
-html, body {
+html {
   margin: 0;
   padding: 0;
-  height: 100dvh;
-  min-height: 100dvh;
+  height: 100%;
   background-color: var(--color-bg-base);
   color: #f1f5f9; /* Slate 100 */
-  overflow: hidden;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  background-color: var(--color-bg-base);
+  color: #f1f5f9; /* Slate 100 */
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 
 #svelte {
-  height: 100dvh;
-  min-height: 100dvh;
+  height: 100%;
 }
 
-/* Scrollbar styling */
+/* Scrollbar hiding policy - maintaining scroll capability while hiding visual scrollbars */
+html, body, #svelte, .scrollbar-thin {
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+
+html::-webkit-scrollbar,
+body::-webkit-scrollbar,
+#svelte::-webkit-scrollbar,
+.scrollbar-thin::-webkit-scrollbar,
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
 }
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-::-webkit-scrollbar-thumb {
-  background: #5a554f;
-  border-radius: 9999px;
-}
-::-webkit-scrollbar-thumb:hover {
-  background: #6b655d;
+
+/* 4. Accessibility Preferences Reset (Prefers Reduced Motion OS level) */
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after {
+    animation-delay: -1ms !important;
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    background-attachment: scroll !important;
+    scroll-behavior: auto !important;
+    transition-delay: 0s !important;
+    transition-duration: 0s !important;
+  }
 }

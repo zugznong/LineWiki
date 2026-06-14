@@ -1,5 +1,6 @@
 <script lang="ts">
   import { ArrowLeft, ArrowRight, Home, ArrowUpDown, Settings, Copy, Check } from '@lucide/svelte';
+  import { tick } from 'svelte';
   import { createAppServices } from '$lib/composition/createAppServices';
   import { positionStore } from '$lib/stores/positionStore.svelte.ts';
   import { panelStore } from '$lib/stores/panelStore.svelte.ts';
@@ -39,11 +40,14 @@
     services.flipBoard.execute();
   }
 
-  function handleSettings() {
-    if (viewportStore.isMobile) {
-      panelStore.toggleMobileSettings();
-    } else {
-      panelStore.setDesktopActiveTab('settings');
+  async function handleSettings() {
+    panelStore.setActiveTab('settings');
+    if (!viewportStore.usesDesktopShell) {
+      await tick();
+      const container = document.getElementById('bottom-panel-container');
+      if (container) {
+        container.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
     }
   }
 
@@ -70,15 +74,16 @@
 <header class="h-16 border-b border-[var(--color-border-primary)] bg-[var(--color-bg-surface)] {headerPadding} flex items-center justify-between shrink-0 select-none z-30" id="position-topbar">
   <div class="flex items-center {containerGap}">
     <!-- 홈 버튼으로 전환된 독립된 제어기 -->
-    <button 
-      onclick={handleHome}
+    <a 
+      href="/"
+      data-sveltekit-reload
       class="text-slate-400 hover:text-white bg-[var(--color-bg-card)] hover:bg-[var(--color-bg-panel)] border border-[var(--color-border-primary)] hover:border-[var(--color-border-secondary)] {btnPadding} rounded-xl transition cursor-pointer flex items-center justify-center shrink-0"
       aria-label="홈으로 이동"
       title="홈으로 이동"
       id="topbar-home-btn"
     >
       <Home size={iconSize} />
-    </button>
+    </a>
 
     <div class="h-4 w-[1px] bg-[var(--color-border-primary)] shrink-0 {smallWidth < 380 ? 'mx-0.5' : 'mx-1'}"></div>
 
@@ -109,13 +114,14 @@
     <div class="h-4 w-[1px] bg-[var(--color-border-primary)] shrink-0 {smallWidth < 380 ? 'mx-0.5' : 'mx-1'}"></div>
     
     <!-- LineWiki 로고 브랜드 홈 링크 -->
-    <button 
-      onclick={handleHome}
+    <a 
+      href="/"
+      data-sveltekit-reload
       class="text-slate-400 hover:text-emerald-400 font-display font-medium text-sm flex items-center transition cursor-pointer py-1 px-1 xs:px-1.5 hidden sm:flex shrink-0"
       id="topbar-logo-btn"
     >
       <span class="font-bold text-white hover:text-emerald-400 transition" id="topbar-logo-text">Line<span class="text-emerald-500">Wiki</span></span>
-    </button>
+    </a>
   </div>
 
   <!-- FEN 복사 영역 (데스크톱 및 태블릿에서 노출) -->

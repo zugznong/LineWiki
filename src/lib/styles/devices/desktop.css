@@ -1,45 +1,105 @@
 /* Standard Desktop Triple-Column Grid System Setup */
 
-@media (min-width: 1024px) {
+@media (min-width: 1200px) {
+  :root {
+    --move-history-strip-height: 44px;
+  }
+
   #desktop-3-column-layout {
-    display: flex !important;
-    align-items: stretch;
-    height: 100%;
-    min-height: 0;
+    display: grid !important;
+    align-items: stretch !important;
+    height: 100% !important;
+    min-height: 0 !important;
+    max-height: 100% !important;
+    width: 100%;
+    max-width: 100%;
+    overflow: hidden;
+    gap: var(--spacing-card-gap, 1.25rem);
+  }
+
+  /* data-layout-mode=standard: grid template-columns 3-rows */
+  #desktop-3-column-layout[data-layout-mode="standard"] {
+    display: grid !important;
+    grid-template-areas: "board candidate side-panel" !important;
+    grid-template-columns: minmax(0, 1fr) clamp(250px, 18vw, 320px) clamp(300px, 22vw, 385px) !important;
+    grid-template-rows: 100% !important;
+  }
+
+  /* data-layout-mode=compact: more dense widths */
+  #desktop-3-column-layout[data-layout-mode="compact"] {
+    display: grid !important;
+    grid-template-areas: "board candidate side-panel" !important;
+    grid-template-columns: minmax(0, 1fr) 250px 310px !important;
+    grid-template-rows: 100% !important;
+  }
+
+  /* data-layout-mode=wide-short: responsive 2-rows right-rail using Grid Areas */
+  #desktop-3-column-layout[data-layout-mode="wide-short"] {
+    display: grid !important;
+    grid-template-areas: 
+      "board candidate"
+      "board side-panel" !important;
+    grid-template-columns: minmax(0, 1fr) clamp(360px, 25vw, 520px) !important;
+    grid-template-rows: minmax(0, 42%) minmax(0, 58%) !important;
+    height: 100% !important;
+    align-items: stretch !important;
+  }
+
+  #desktop-board-col {
+    grid-area: board;
+    display: grid !important;
+    grid-template-rows: auto minmax(0, 1fr) var(--move-history-strip-height) !important;
+    min-width: 0 !important;
+    min-height: 0 !important;
+    height: 100% !important;
+    max-height: 100% !important;
   }
 
   /* Chessboard wrapper fluid calculations */
   #desktop-3-column-layout #chess-board-card {
     aspect-ratio: 1 / 1;
-    max-height: calc(100vh - 200px);
+    flex: 0 1 auto;
     width: 100% !important;
     height: 100% !important;
-    min-height: 280px;
     max-width: 600px !important;
+    max-height: 100% !important;
+  }
+
+  @media (min-height: 700px) {
+    #desktop-3-column-layout #chess-board-card {
+      min-height: 280px;
+    }
   }
 
   #desktop-3-column-layout #chess-board-wrapper {
-    width: 100% !important;
-    height: 100% !important;
+    /* Prevent overriding strict JS pixel sizing dimensions */
     max-width: 100% !important;
     max-height: 100% !important;
   }
 
   #desktop-side-panel-col {
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-    min-height: 0;
+    grid-area: side-panel;
+    display: flex !important;
+    flex-direction: column !important;
+    height: 100% !important;
+    max-height: 100% !important;
+    min-height: 0 !important;
+    min-width: 0 !important;
   }
 
   /* Candidate Moves column layout stabilization */
   #desktop-candidate-col {
-    min-height: 0;
-    overflow: hidden;
+    grid-area: candidate;
+    display: flex !important;
+    flex-direction: column !important;
+    height: 100% !important;
+    max-height: 100% !important;
+    min-height: 0 !important;
+    min-width: 0 !important;
+    overflow: hidden !important;
   }
 
   #desktop-candidate-col #candidate-move-container {
-    height: 100%;
-    max-height: calc(100vh - 200px);
+    max-height: 100% !important;
   }
 }

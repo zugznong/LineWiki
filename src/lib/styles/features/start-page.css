@@ -19,7 +19,8 @@
 
 #start-page-shell {
   width: 100%;
-  min-height: 100%;
+  min-height: 100dvh;
+  overflow: visible;
   background-color: var(--color-bg-base);
   background-image: radial-gradient(circle at top, rgba(16, 185, 129, 0.08) 0%, transparent 60%);
 }

@@ -1,4 +1,4 @@
-import { createAppServices } from '$lib/composition/createAppServices';
+import { SessionLineHistoryAdapter } from '$lib/adapters/storage/SessionLineHistoryAdapter';
 import { positionStore } from './positionStore.svelte.ts';
 import type { LineHistoryItem } from '$lib/domain/chess/LineHistory';
 
@@ -98,8 +98,8 @@ class LineHistoryStore {
       return;
     }
 
-    const services = createAppServices();
-    const historyRes = services.restoreLineHistory.execute();
+    const adapter = new SessionLineHistoryAdapter();
+    const historyRes = adapter.loadHistory();
     if (historyRes.isOk()) {
        this.state.historyItems = historyRes.unwrap();
     } else {

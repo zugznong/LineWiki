@@ -1,6 +1,8 @@
 import type { PageLoad } from './$types';
 import { createChessServices } from '$lib/composition/createChessServices';
 
+export const prerender = false;
+
 export const load: PageLoad = async ({ params }) => {
   const rawFen = params.fen || '';
   

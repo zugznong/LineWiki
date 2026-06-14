@@ -1,13 +1,15 @@
 <script lang="ts">
   import LocalEvalCell from './LocalEvalCell.svelte';
   import type { EngineMoveEvaluation, MergedMoveEvaluation } from '../../domain/analysis/AnalysisTypes';
+  import { getEvalScoreValue } from '../../domain/analysis/CandidateMoveSortPolicy';
   import { ShieldAlert, Swords, Trophy } from '@lucide/svelte';
 
-  let { uci, san, index, evaluation, onclick, compact = false } = $props<{
+  let { uci, san, index, evaluation, sortingEvaluation, onclick, compact = false } = $props<{
     uci: string;
     san: string;
     index: number;
     evaluation: EngineMoveEvaluation | MergedMoveEvaluation | undefined;
+    sortingEvaluation: EngineMoveEvaluation | MergedMoveEvaluation | undefined;
     onclick: () => void;
     compact?: boolean;
   }>();
@@ -23,6 +25,8 @@
       onclick();
     }
   }
+
+  const sortScore = $derived(getEvalScoreValue(sortingEvaluation));
 </script>
 
 <div 
@@ -34,6 +38,10 @@
   aria-label="후보수 {index + 1}: {san}, uci {uci}"
   id="candidate-row-{uci}"
   data-uci={uci}
+  data-rank={index + 1}
+  data-score={evaluation?.score ? evaluation.score.format() : ''}
+  data-sort-score={sortScore !== null ? sortScore : ''}
+  data-source={evaluation ? ('source' in evaluation ? (evaluation as any).source : 'local') : ''}
   title="UCI: {uci}"
 >
   <div class="{compact ? 'px-2.5 py-1' : 'px-4 py-3'} flex items-center justify-between">
@@ -54,12 +62,14 @@
             <ShieldAlert size={9} class="shrink-0 text-amber-400" />
             <span>Check</span>
           </span>
-        {:else if isCapture}
+        {/if}
+        {#if isCapture}
           <span class="px-1.5 py-0.5 text-[9px] font-bold rounded bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 flex items-center gap-0.5 uppercase tracking-wide shrink-0">
             <Swords size={9} class="shrink-0 text-emerald-400" />
             <span>Cap</span>
           </span>
-        {:else if isPromotion}
+        {/if}
+        {#if isPromotion}
           <span class="px-1.5 py-0.5 text-[9px] font-bold rounded bg-sky-500/15 text-sky-400 border border-sky-500/30 flex items-center gap-0.5 uppercase tracking-wide shrink-0">
             <Trophy size={9} class="shrink-0 text-sky-400" />
             <span>Promo</span>

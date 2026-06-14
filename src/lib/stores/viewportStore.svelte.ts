@@ -54,11 +54,31 @@ class ViewportStore {
   }
 
   /**
-   * 1024px 이상의 고해상도 환경을 데스크톱 표준 뷰로 할당합니다.
+   * 1024px 이상의 고해상도 환경 중 표준/와이드 데스크톱 뷰를 판단합니다.
+   * compactDesktop, lowHeightDesktop과는 상호 배타적(Exclusive)으로 작동합니다.
    */
   public get isDesktop(): boolean {
     const mode = this.layoutMode;
-    return mode === 'desktop' || mode === 'desktop-wide' || mode === 'compactDesktop' || mode === 'lowHeightDesktop';
+    return mode === 'desktop' || mode === 'desktop-wide' || mode === 'wideShortHeight';
+  }
+
+  /**
+   * 일반 데스크톱, 와이드 데스크톱, 낮은 와이드 데스크톱(wideShortHeight/extremeShortHeight) 중 3열 데스크톱 셸을 
+   * 사용할 세부 레이아웃 조건을 충족하는지 가늠하는 실질적인 단일 판정 통로입니다.
+   */
+  public get usesDesktopShell(): boolean {
+    const mode = this.layoutMode;
+    if (mode === 'wideShortHeight' || mode === 'extremeShortHeight') {
+      return true;
+    }
+    if (mode === 'desktop' || mode === 'desktop-wide') {
+      return this.state.width >= 1200 && this.state.height >= 700 && this.aspectRatio >= 1.4;
+    }
+    return false;
+  }
+
+  public get isWideShortHeight(): boolean {
+    return this.layoutMode === 'wideShortHeight';
   }
 
   /**
@@ -86,6 +106,10 @@ class ViewportStore {
   /**
    * 화면 픽셀 점유를 최소화하고 레이아웃 깨짐을 방지하기 위해 
    * 단말 레이아웃 모드별 세부 제약 조건을 연립하여 선제 계산된 이상적인 정방형 2D 체스판 크기(px)를 산출해 줍니다.
+   * [한계 사항]: 3열 레이아웃(Desktop/Wide 등)에서는 실시간으로 계산되는 보드 컬럼의 고유 가용 폭(Available column width)을 
+   * 뷰포트 스토어 단에서 단독으로 엄밀히 예측/고려할 수 없습니다. 따라서 이 static getter 값은 일종의 폴백 가이드라인이며,
+   * 실제 정방형 체스판 렌더링에 필요한 보드 크기의 최종 결정 및 뭉개짐(distortion) 방지는 Board.svelte 컴포넌트 내부의
+   * ResizeObserver 컨테이너 측정값을 최우선적으로 따르도록 설계되었습니다.
    */
   public get boardSize(): number {
     const { width, height } = this.state;
@@ -109,12 +133,16 @@ class ViewportStore {
   /**
    * 클라이언트 측에 resize window 리스너를 결속하여 실시간 해상도 변동을 감지하고 스토어에 바인딩합니다.
    */
+  public updateDimensions(width: number, height: number) {
+    this.state.width = width;
+    this.state.height = height;
+  }
+
   public init() {
     if (!isBrowser) return;
     
     const handleResize = () => {
-      this.state.width = window.innerWidth;
-      this.state.height = window.innerHeight;
+      this.updateDimensions(window.innerWidth, window.innerHeight);
     };
 
     window.addEventListener('resize', handleResize);

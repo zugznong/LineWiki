@@ -31,6 +31,10 @@
 }
 
 #position-page-shell {
+  height: 100dvh;
+  max-height: 100dvh;
+  overflow: hidden;
+  overscroll-behavior: none;
   background-color: var(--color-bg-base);
 }
 
@@ -95,5 +99,41 @@
 #desktop-3-column-layout {
   min-height: 0;
   overflow: hidden;
+}
+
+#position-fallback {
+  min-height: 100%;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  touch-action: pan-y;
+}
+
+/* Ensure mobile scroll layouts and fallbacks act as active vertical scroll containers and preserve scroll chains */
+#position-fallback,
+#mobile-single-flow-layout {
+  overflow-y: auto !important;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* 모바일/태블릿 화면에서는 주 레이아웃 컨테이너가 모바일 뷰포트의 자연스러운 스크롤 흐름을 타도록 구성 */
+@media (max-width: 1023px) {
+  #position-main-area {
+    overflow: hidden !important;
+    height: 100% !important;
+    max-height: 100% !important;
+    min-height: 0 !important;
+  }
+  #desktop-3-column-layout {
+    overflow: hidden !important;
+    height: 100% !important;
+    max-height: 100% !important;
+    min-height: 0 !important;
+  }
+  #mobile-single-flow-layout {
+    overflow-y: auto !important;
+    height: 100% !important;
+    max-height: 100% !important;
+    min-height: 0 !important;
+  }
 }
 

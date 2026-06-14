@@ -1,7 +1,9 @@
 import type { BoardSettingsPort } from '../../ports/BoardSettingsPort';
 import type { Result } from '../../utils/result';
 import { success } from '../../utils/result';
-import { DEFAULT_THEME, DEFAULT_PIECE_STYLE } from '../../config/appConfig';
+import { DEFAULT_THEME } from '../../config/appConfig';
+import { BoardTheme } from '../../domain/board/BoardTheme';
+import { PieceStyle } from '../../domain/board/PieceStyle';
 
 export interface BoardSettingsData {
   theme: string;
@@ -14,11 +16,12 @@ export class LoadBoardSettingsUseCase {
 
   public execute(): Result<BoardSettingsData, Error> {
     const loadedResult = this.boardSettingsPort.loadSettings();
+    const defaultPieceStyle = 'Cburnett';
     
     // Default fallback settings
     const defaultSettings: BoardSettingsData = {
       theme: DEFAULT_THEME,
-      pieceStyle: DEFAULT_PIECE_STYLE,
+      pieceStyle: defaultPieceStyle,
       orientation: 'white'
     };
 
@@ -28,9 +31,25 @@ export class LoadBoardSettingsUseCase {
 
     const value = loadedResult.unwrap();
     
-    // 만약 데이터가 정상적이지 않거나 깨진 경우 기본값으로 원활히 복구(Self-Healing)
-    const theme = typeof value.theme === 'string' && value.theme.trim() ? value.theme : DEFAULT_THEME;
-    const pieceStyle = typeof value.pieceStyle === 'string' && value.pieceStyle.trim() ? value.pieceStyle : DEFAULT_PIECE_STYLE;
+    // Validate Theme name against supported board themes
+    const validThemes = BoardTheme.getAllThemes().map(t => t.name as string);
+    let theme = typeof value.theme === 'string' && value.theme.trim() ? value.theme : DEFAULT_THEME;
+    if (!validThemes.includes(theme)) {
+      theme = DEFAULT_THEME;
+    }
+
+    // Validate Piece Style name against supported unicode styles
+    let pieceStyle = typeof value.pieceStyle === 'string' && value.pieceStyle.trim() ? value.pieceStyle : defaultPieceStyle;
+    
+    // Handle old, legacy, or deleted styles migration to Unicode Classic
+    if (pieceStyle === 'Unicode' || pieceStyle === 'Unicode Classic' || pieceStyle === 'Unicode High Contrast' || pieceStyle === 'Unicode Minimal') {
+      pieceStyle = 'Unicode Classic';
+    }
+    
+    const validStyles = PieceStyle.getAllStyles().map(s => s.name as string);
+    if (!validStyles.includes(pieceStyle)) {
+      pieceStyle = defaultPieceStyle;
+    }
     
     let orientation: 'white' | 'black' = 'white';
     if (value.orientation === 'white' || value.orientation === 'black') {
@@ -44,4 +63,5 @@ export class LoadBoardSettingsUseCase {
     });
   }
 }
+
 

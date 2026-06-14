@@ -16,6 +16,9 @@ package-lock.json
 
 # Testing results and logs
 coverage/
+test-results/
+playwright-report/
+blob-report/
 *.log
 .pnpm-debug.log*
 
@@ -24,3 +27,5 @@ coverage/
 Thumbs.db
 
 _local/
+/package/
+/vendor-downloads/

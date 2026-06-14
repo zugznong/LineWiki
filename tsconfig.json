@@ -13,7 +13,8 @@
     "moduleResolution": "bundler",
     "module": "ESNext",
     "target": "ES2022",
-    "types": ["node"]
+    "types": ["node"],
+    "jsx": "react-jsx"
   },
   "include": [
     "src/**/*",

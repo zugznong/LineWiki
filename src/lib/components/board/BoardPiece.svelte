@@ -1,14 +1,16 @@
 <script lang="ts">
   import { boardStore } from '$lib/stores/boardStore.svelte.ts';
+  import { PieceStyle } from '$lib/domain/board/PieceStyle';
+  import { PieceAssetPath } from '$lib/domain/board/PieceAssetPath';
   
-  let { type, color, size } = $props<{
+  let { type, color, size, styleName } = $props<{
     type: 'p' | 'r' | 'n' | 'b' | 'q' | 'k';
     color: 'w' | 'b';
     size: number;
+    styleName?: string;
   }>();
 
-  // Mapping unicode pieces cleanly
-  // 백색/흑색 기물별 가장 칠해지고 가시성 높은 유니코드 체스 심볼 매핑
+  // Map classic unicode piece fallback dynamically
   const piecesUnicodeMap: Record<string, Record<string, string>> = {
     p: { w: '♙', b: '♟' },
     r: { w: '♖', b: '♜' },
@@ -20,26 +22,65 @@
 
   const code = $derived(piecesUnicodeMap[type]?.[color] || '');
 
-  // 스타일 프리셋별 클래스 및 커스텀 스타일 연산
-  const pieceClasses = $derived(() => {
-    const base = "select-none leading-none text-center flex items-center justify-center transition-all duration-150 pointer-events-none scale-95";
-    
-    // 일반 Unicode: 전통적 흰색 vs 검은색 기물 고대비 실크 스크린 섀도우
-    if (color === 'w') {
-      return `${base} text-white drop-shadow-[0_2px_3px_rgba(0,0,0,0.55)]`;
-    } else {
-      return `${base} text-slate-950 drop-shadow-[0_1px_2px_rgba(255,255,255,0.25)] drop-shadow-[0_2px_3px_rgba(0,0,0,0.7)]`;
-    }
+  // failed CSS/SVG URL tracker to granularly fallback without affecting global configs or other piece variants
+  let failedSvgSrc = $state<string>('');
+  let hasRenderError = $state<boolean>(false);
+
+  // 스타일 명칭이나 로드 대상 경로(svgSrc)가 변할 경우, 기존 에러 플래그들을 즉시 안전 초기화하여 Unicode fallback 루프 잔존을 차단합니다.
+  $effect(() => {
+    const _currentStyle = styleName || boardStore.pieceStyle;
+    const _currentSrc = svgSrc;
+    failedSvgSrc = '';
+    hasRenderError = false;
   });
+
+  const activeStyle = $derived(PieceStyle.getStyle(styleName || boardStore.pieceStyle));
+
+  const svgSrc = $derived(
+    activeStyle.kind === 'svg'
+      ? PieceAssetPath.getPath(activeStyle.assetDirectory, color, type)
+      : ''
+  );
+
+  const isFallback = $derived(activeStyle.kind === 'svg' && (failedSvgSrc === svgSrc || hasRenderError));
+  const renderStyle = $derived(isFallback ? PieceStyle.CLASSIC : activeStyle);
+
+  // 스타일 프리셋별 클래스 및 커스텀 스타일 연산
+  const pieceClasses = $derived(
+    "select-none leading-none text-center flex items-center justify-center transition-all duration-150 pointer-events-none scale-95"
+  );
+
+  const customStyle = $derived(
+    renderStyle.kind === 'unicode'
+      ? `font-size: ${size * renderStyle.scale}px; width: ${size}px; height: ${size}px; color: ${color === 'w' ? renderStyle.whiteColor : renderStyle.blackColor}; filter: ${color === 'w' ? renderStyle.whiteFilter : renderStyle.blackFilter}; pointer-events: none;`
+      : `width: ${size}px; height: ${size}px; pointer-events: none;`
+  );
+
+  function handleImageError() {
+    failedSvgSrc = svgSrc;
+    hasRenderError = true;
+  }
 </script>
 
 <div 
-  class={pieceClasses()}
-  style="font-size: {size * 0.76}px; width: {size}px; height: {size}px;"
+  class={pieceClasses}
+  style={customStyle}
   aria-label="{color === 'w' ? 'White' : 'Black'} {type}"
+  draggable="false"
 >
-  <span>
-    {code}
-  </span>
+  {#if renderStyle.kind === 'svg'}
+    <img 
+      src={svgSrc} 
+      alt="{color === 'w' ? 'White' : 'Black'} {type}"
+      style="width: {size * renderStyle.scale}px; height: {size * renderStyle.scale}px; object-fit: contain; pointer-events: none;"
+      draggable="false"
+      onerror={handleImageError}
+    />
+  {:else}
+    <span draggable="false" style="pointer-events: none;">
+      {code}
+    </span>
+  {/if}
 </div>
+
 

@@ -1,5 +1,6 @@
 import type { Fen } from '../domain/chess/Fen';
 import type { ChessMove } from '../domain/chess/ChessMove';
+import type { DrawState } from '../domain/chess/DrawState';
 
 /**
  * Chess 규칙 엔진(chess.js 등)과의 상호작용을 처리하는 외부 시스템 포트 인터페이스입니다.
@@ -35,5 +36,10 @@ export interface ChessEnginePort {
    * 현재 FEN 포지션에 특정 ChessMove 행위를 적용하고, 그에 따른 차기 FEN 포지션 문자열을 도출합니다.
    */
   makeMove(fen: Fen, move: ChessMove): string;
+
+  /**
+   * 구체적인 무승부 상태를 계산하여 도메인 타입 DrawState를 반환합니다.
+   */
+  getDrawState(fen: Fen | string, historyItems?: string[]): DrawState;
 }
 

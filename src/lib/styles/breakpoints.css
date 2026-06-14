@@ -1,0 +1,7 @@
+/* CSS Media Query contract for wideShortHeight Layout Mode */
+@media (min-width: 1200px) and (max-height: 819px) and (min-aspect-ratio: 16/9) {
+  /* This represents the low-height yet wide desktop layout mode space */
+  :root {
+    --layout-mode: 'wideShortHeight';
+  }
+}

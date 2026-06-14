@@ -15,19 +15,85 @@
 
   // 병합 평가치 전체를 한 번만 리액티브하게 인출해 렌더 갱신 범위를 좁힙니다.
   const evaluations = $derived(evaluationStore.mergedEvaluations);
+  const completedDepth = $derived(localAnalysisStore.completedFrameDepth);
 
-  // 평가치를 바로 정렬에 쓰지 않고 디바운스 처리된 상태로 교체합니다.
-  let debouncedEvaluations = $state<Record<string, any>>({});
+  // 로컬 분석용 디바운스된 평가치 (completed depth 프레임이 안착했을 때만 업데이트)
+  let debouncedLocalEvaluations = $state<Record<string, any>>({});
+  let lastCompletedDepth = $state<number | null>(null);
 
+  const activeFen = $derived(evaluationStore.activeFen);
+  const activeGeneration = $derived(evaluationStore.generation);
+
+  let prevFen = $state<string>('');
+  let prevGen = $state<number>(0);
+
+  // 단 하나의 이펙트를 사용해 정렬 타이머 및 FEN 교체 정화를 통합 통제합니다.
   $effect(() => {
+    const fen = activeFen;
+    const gen = activeGeneration;
+    const depth = completedDepth;
     const currentEvals = evaluations;
-    const timeout = setTimeout(() => {
-      debouncedEvaluations = { ...currentEvals };
-    }, 50);
+    const isFallbackMode = localAnalysisStore.engineMode === 'fallback';
 
-    return () => {
-      clearTimeout(timeout);
-    };
+    // 1. FEN 혹은 세션 세대가 전격 전환되었을 때는 즉각 정렬 대상을 청소합니다.
+    if (fen !== prevFen || gen !== prevGen) {
+      prevFen = fen;
+      prevGen = gen;
+      debouncedLocalEvaluations = {};
+      lastCompletedDepth = null;
+      return;
+    }
+
+    // 2. 만약 fallback 모드라면 속도 가치 극대화를 위해 디바운스 없이 로컬/fallback 평가치를 즉시 직결 반영합니다.
+    if (isFallbackMode) {
+      const localOnly = Object.fromEntries(
+        Object.entries(currentEvals).filter(([_, ev]) => ev?.source === 'local' || ev?.source === 'fallback')
+      );
+      debouncedLocalEvaluations = localOnly;
+      return;
+    }
+
+    // 3. 로컬 분석 MultiPV 완성 프레임 깊이가 갱신 지점을 통과한 경우에만 50ms 정전 디바운스를 반영해 화면 떨림을 방지합니다.
+    if (depth !== null && depth !== lastCompletedDepth) {
+      lastCompletedDepth = depth;
+      
+      const timeout = setTimeout(() => {
+        const localOnly = Object.fromEntries(
+          Object.entries(currentEvals).filter(([_, ev]) => ev?.source === 'local')
+        );
+        debouncedLocalEvaluations = localOnly;
+      }, 50);
+
+      return () => {
+        clearTimeout(timeout);
+      };
+    }
+  });
+
+  // DB/fallback/local 평가 모두 후보수 정렬에 통합 유지하되, local MultiPV의 흔들림만 완성 프레임 기준으로 debounce 처리
+  const stableSortingEvaluations = $derived.by(() => {
+    const currentEvals = evaluations;
+    const sortedMap: Record<string, any> = {};
+
+    for (const [uci, ev] of Object.entries(currentEvals)) {
+      if (!ev) continue;
+
+      if (ev.source === 'db' || ev.source === 'fallback') {
+        // DB 및 즉시 반영 폴백 평가는 실시간 완전 동기화
+        sortedMap[uci] = ev;
+      } else if (ev.source === 'local') {
+        const debouncedEv = debouncedLocalEvaluations[uci];
+        if (debouncedEv) {
+          // 완성 프레임 시점의 고정된 점수를 정렬 지연 지표로 삼아 떨림 예방
+          sortedMap[uci] = debouncedEv;
+        } else {
+          // 만약 디바운스된 기록이 없다면 (초기 기동 혹은 첫 연산 수), 정렬에서 누락되어 하위 방치되는 경우 예외 조치로 실시간 기재
+          sortedMap[uci] = ev;
+        }
+      }
+    }
+
+    return sortedMap;
   });
 
   // 뷰포트 반응형 설정
@@ -41,7 +107,16 @@
   // 처리된 무브 목록 (정렬 상태 반영)
   const processedMoves = $derived.by(() => {
     const turn = currentPosition?.activeColor || 'w';
-    return sortCandidateMoves(moves, debouncedEvaluations, turn, sortMode);
+    const status = localAnalysisStore.status;
+    
+    if (
+      status === 'fallback-disabled' ||
+      status === 'fallback-failed' ||
+      status === 'analysis-unavailable'
+    ) {
+      return sortCandidateMoves(moves, {}, turn, 'natural');
+    }
+    return sortCandidateMoves(moves, stableSortingEvaluations, turn, sortMode);
   });
 
   function toggleSortMode() {
@@ -54,8 +129,12 @@
     }
   }
 
-  function handleMoveClick(from: string, to: string, promotion: string | null) {
+  function handleMoveClick(uci: string, from: string, to: string, promotion: string | null) {
     if (!currentPosition) return;
+
+    // 수 입력 직후 이전 평가를 기억해 둡니다.
+    localAnalysisStore.rememberLastSelectedMoveEvaluation(uci);
+
     const playRes = services.playMove.execute(
       currentPosition.fen,
       from,
@@ -70,7 +149,7 @@
   }
 </script>
 
-<div class="flex flex-col h-full overflow-hidden min-h-0" id="candidate-move-container">
+<div class="flex flex-col h-full max-h-full overflow-hidden min-h-0" id="candidate-move-container">
   
   <!-- 상단 메타 인포 뷰 영역 (전체 후보수 및 현재 표시 방식 가이드) -->
   <div class="px-3 {useCompactMode ? 'py-1' : 'py-1.5'} bg-[var(--color-bg-nested)] border-b border-[var(--color-border-primary)] shrink-0 flex items-center justify-between text-[10px] text-slate-400 select-none" id="candidate-meta-info">
@@ -130,14 +209,15 @@
         <span class="text-[10px] text-slate-600">더 이상 전개 가능한 새로운 합법 후보수가 발견되지 않았습니다.</span>
       </div>
     {:else}
-      {#each processedMoves as m, i}
+      {#each processedMoves as m, i (m.uci)}
         <CandidateMoveRow 
           uci={m.uci}
           san={m.san}
           index={i}
           compact={useCompactMode}
           evaluation={evaluations[m.uci]}
-          onclick={() => handleMoveClick(m.from, m.to, m.promotion)}
+          sortingEvaluation={stableSortingEvaluations[m.uci]}
+          onclick={() => handleMoveClick(m.uci, m.from, m.to, m.promotion)}
         />
       {/each}
       {#if processedMoves.length > 6}

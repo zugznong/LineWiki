@@ -15,7 +15,7 @@ export interface EngineMoveEvaluation {
   moveUci: string;
   score: EvalScore | null;
   depth: Depth;
-  source?: 'db' | 'local' | 'fallback';
+  source?: 'db' | 'local' | 'fallback' | 'db-stale' | 'provisional' | 'previous-line';
   trustedDepth?: number;
   createdAt?: string;
   updatedAt?: string;
@@ -28,7 +28,7 @@ export interface MergedMoveEvaluation {
   moveSan: string;
   score: EvalScore | null;
   depth: Depth;
-  source: 'db' | 'local' | 'fallback';
+  source: 'db' | 'local' | 'fallback' | 'db-stale' | 'provisional' | 'previous-line';
   trustedDepth?: number;
   createdAt?: string;
   updatedAt?: string;

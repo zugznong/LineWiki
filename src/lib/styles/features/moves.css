@@ -112,17 +112,56 @@
   color: var(--color-text-primary);
 }
 
+:root {
+  --move-history-strip-height: 42px;
+}
+
+#desktop-history-slot, #mobile-history-slot {
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  box-sizing: border-box !important;
+  overflow: hidden !important;
+  height: var(--move-history-strip-height) !important;
+  min-height: var(--move-history-strip-height) !important;
+  max-height: var(--move-history-strip-height) !important;
+  flex: 0 0 var(--move-history-strip-height) !important;
+  flex-shrink: 0 !important;
+}
+
 /* Move history sequential horizontally stripped visual bar */
 #move-history-strip {
-  display: flex;
-  align-items: center;
-  gap: 0.35rem;
-  overflow-x: auto;
-  padding: 0.5rem 0.75rem;
+  display: flex !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  box-sizing: border-box !important;
+  overflow: hidden !important;
+  overflow-x: hidden !important;
+  overflow-y: hidden !important;
+  flex: 0 0 var(--move-history-strip-height) !important;
+  align-self: stretch !important;
+  align-items: center !important;
+  gap: 0.35rem !important;
+  padding: 0 0.75rem !important;
   background-color: var(--color-bg-nested);
   border: 1px solid var(--color-border-primary);
   border-radius: var(--radius-badge);
-  scrollbar-width: none;
+  scrollbar-width: none !important;
+  height: var(--move-history-strip-height) !important;
+  min-height: var(--move-history-strip-height) !important;
+  max-height: var(--move-history-strip-height) !important;
+}
+
+#strip-pairs-container {
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.5rem !important;
+  flex: 1 1 0% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
 }
 
 #move-history-strip::-webkit-scrollbar {
@@ -155,14 +194,24 @@
 
 /* Candidate Moves Scroll & Layout Capping */
 #candidate-move-container {
-  max-height: min(100%, calc(100vh - 180px));
+  height: auto;
+  max-height: 100%;
   min-height: 0;
   overflow: hidden;
 }
 
 #candidate-move-list {
+  flex: 1 1 auto;
   min-height: 0;
   overflow-y: auto;
   overscroll-behavior: contain;
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+
+#candidate-move-list::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
 }
 

@@ -12,8 +12,8 @@
   }
 </script>
 
-<div class="flex-1 flex flex-col items-center justify-center p-6 bg-[var(--color-bg-base)]" id="position-fallback">
-  <div class="max-w-md w-full bg-[var(--color-bg-surface)] border border-[var(--color-border-primary)] rounded-2xl p-6 md:p-8 text-center space-y-6 shadow-2xl animate-fade-in">
+<div class="flex-1 flex flex-col items-center justify-center p-6 bg-[var(--color-bg-base)] overflow-y-auto w-full min-h-0" id="position-fallback">
+  <div class="max-w-md w-full bg-[var(--color-bg-surface)] border border-[var(--color-border-primary)] rounded-2xl p-6 md:p-8 text-center space-y-6 shadow-2xl">
     <div class="w-14 h-14 bg-rose-500/10 border border-rose-500/20 text-rose-400 rounded-2xl flex items-center justify-center mx-auto shadow-lg shadow-rose-950/25">
       <ShieldAlert size={28} />
     </div>

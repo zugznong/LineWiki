@@ -15,18 +15,26 @@
     "prepare": "svelte-kit sync",
     "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
     "test": "vitest run",
+    "test:e2e:regular:fast": "cross-env PLAYWRIGHT_FAST_E2E=true playwright test",
+    "test:e2e:regular:full": "cross-env PLAYWRIGHT_FAST_E2E=false playwright test",
+    "test:e2e:stockfish": "playwright test --config=playwright.stockfish.config.ts",
+    "test:e2e:stockfish:slow": "playwright test --config=playwright.slow-stockfish.config.ts",
+    "test:e2e": "pnpm run test:e2e:regular:fast && pnpm run test:e2e:stockfish",
     "preinstall": "node -e \"if (!/pnpm/.test(process.env.npm_execpath || '')) { console.warn('\\u001b[33m[GUIDE] Linewiki relies on pnpm for deterministic dependency resolution. Please run \\u001b[1m' + 'pnpm install' + '\\u001b[22m to ensure correct results.\\u001b[0m'); }\""
   },
   "dependencies": {
-    "chess.js": "1.4.0",
-    "@lucide/svelte": "1.17.0"
+    "@lucide/svelte": "1.17.0",
+    "chess.js": "1.4.0"
   },
   "devDependencies": {
+    "@playwright/test": "^1.60.0",
     "@sveltejs/adapter-cloudflare": "7.2.8",
     "@sveltejs/kit": "2.64.0",
     "@sveltejs/vite-plugin-svelte": "7.1.2",
     "@tailwindcss/vite": "4.3.0",
     "@types/node": "24.13.1",
+    "cross-env": "^10.1.0",
+    "jsdom": "^29.1.1",
     "svelte": "5.56.3",
     "svelte-check": "4.6.0",
     "tailwindcss": "4.3.0",

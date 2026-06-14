@@ -8,11 +8,12 @@ export interface LineHistoryItem {
   moveSan: string | null;
   from?: string | null;
   to?: string | null;
+  positionKey?: string | null;
 }
 
 /**
- * 라인 연구 중 유저가 유도한 수순(Move sequence with FENs)을 저장 및 복원하는
- * 세션 수순 히스토리 일급 컬렉션 도메인 모델입니다.
+ * 라인 연구 중 유저가 유도한 기보(Move sequence with FENs)를 저장 및 복원하는
+ * 세션 기보 히스토리 일급 컬렉션 도메인 모델입니다.
  */
 export class LineHistory {
   constructor(public readonly items: LineHistoryItem[] = []) {}
@@ -21,7 +22,9 @@ export class LineHistory {
    * 새로운 국면과 수순 정보를 히스토리에 추가하여 전이된 새 LineHistory 객체를 반환합니다.
    */
   public push(fen: string, moveSan: string | null, from?: string | null, to?: string | null): LineHistory {
-    return new LineHistory([...this.items, { fen, moveSan, from, to }]);
+    const parts = fen.trim().split(/\s+/);
+    const positionKey = parts.length >= 4 ? parts.slice(0, 4).join(' ') : null;
+    return new LineHistory([...this.items, { fen, moveSan, from, to, positionKey }]);
   }
 
   /**
@@ -54,7 +57,7 @@ export class LineHistory {
 
       // 최대 300수 항목 개수 상한 엄격 검증
       if (parsed.length > 300) {
-        throw new Error(`역직렬화 실패: 수순 히스토리 항목 개수가 최대 상한(300개)을 초과했습니다. (입력: ${parsed.length}개)`);
+        throw new Error(`역직렬화 실패: 기보 항목 개수가 최대 상한(300개)을 초과했습니다. (입력: ${parsed.length}개)`);
       }
 
       // 데이터 정밀 무결성 검증 후 복원
@@ -100,11 +103,14 @@ export class LineHistory {
           }
         }
 
+        const positionKey = typeof item.positionKey === 'string' ? item.positionKey : null;
+
         items.push({
           fen: validatedFen,
           moveSan,
           from,
-          to
+          to,
+          positionKey
         });
       }
 

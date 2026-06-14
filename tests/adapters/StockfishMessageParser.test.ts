@@ -34,7 +34,7 @@ describe('StockfishMessageParser Tests', () => {
       if (result) {
         expect(result.depth).toBe(6);
         expect(result.score.isCp()).toBe(true);
-        expect(result.score.format()).toBe('-1.2');
+        expect(result.score.format()).toBe('-1.20');
         expect(result.bestMoveUci).toBe('g1f3');
       }
     });
@@ -97,6 +97,36 @@ describe('StockfishMessageParser Tests', () => {
     it('should return null for malformed or other messages', () => {
       expect(parser.parseBestMoveLine('')).toBeNull();
       expect(parser.parseBestMoveLine('info depth 12')).toBeNull();
+    });
+  });
+
+  describe('회귀 테스트 - StockfishMessageParser', () => {
+    it('cp, mate, multipv, pv 복합 문자열 파싱 검증', () => {
+      const line = 'info depth 11 seldepth 12 multipv 2 score cp 82 nodes 35210 nps 120500 time 292 pv d2d4 g7g6 c2c4 f8g7';
+      const parsed = parser.parseInfoLine(line, dummyFen);
+
+      expect(parsed).not.toBeNull();
+      if (parsed) {
+        expect(parsed.depth).toBe(11);
+        expect(parsed.multiPvIndex).toBe(2);
+        expect(parsed.score.isCp()).toBe(true);
+        expect(parsed.score.format()).toBe('+0.82');
+        expect(parsed.bestMoveUci).toBe('d2d4');
+        expect(parsed.nodes).toBe(35210);
+        expect(parsed.pv.getUciMoves()).toEqual(['d2d4', 'g7g6', 'c2c4', 'f8g7']);
+      }
+    });
+
+    it('mate 점수 파싱 검증', () => {
+      const line1 = 'info depth 20 multipv 1 score mate 3 pv h2h4 e7e5';
+      const parsed1 = parser.parseInfoLine(line1, dummyFen);
+      expect(parsed1?.score.isMate()).toBe(true);
+      expect(parsed1?.score.format()).toBe('M3');
+
+      const line2 = 'info depth 20 multipv 1 score mate -4 pv h2h4 e7e5';
+      const parsed2 = parser.parseInfoLine(line2, dummyFen);
+      expect(parsed2?.score.isMate()).toBe(true);
+      expect(parsed2?.score.format()).toBe('-M4');
     });
   });
 });

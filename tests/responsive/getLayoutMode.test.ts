@@ -45,6 +45,18 @@ describe('getLayoutMode Tests', () => {
     expect(getLayoutMode(1680, 1050)).toBe('desktop-wide');
   });
 
+  it('should identify wideShortHeight mode', () => {
+    // Width >= 1440, height >= 500 && height < 700, ratio >= 2
+    expect(getLayoutMode(1920, 1080)).toBe('desktop-wide'); // Not wideShortHeight since height >= 700
+    expect(getLayoutMode(1900, 900)).toBe('desktop-wide');  // Not wideShortHeight since height >= 700
+    expect(getLayoutMode(1680, 1050)).toBe('desktop-wide'); // Not wideShortHeight since height >= 700
+    
+    expect(getLayoutMode(1440, 600)).toBe('wideShortHeight'); // ratio = 2.4, height = 600
+    expect(getLayoutMode(1600, 640)).toBe('wideShortHeight'); // ratio = 2.5, height = 640
+    expect(getLayoutMode(1600, 650)).toBe('wideShortHeight'); // ratio = 2.46 >= 2, height = 650 < 700, width = 1600
+    expect(getLayoutMode(1920, 680)).toBe('wideShortHeight'); // ratio = 2.82 >= 2, height = 680 < 700, width = 1920
+  });
+
   it('should identify compactDesktop and lowHeightDesktop modes', () => {
     // compactDesktop: width < 1200, height >= 600 && height < 685, ratio >= 1.5
     expect(getLayoutMode(1024, 600)).toBe('compactDesktop');
@@ -52,7 +64,7 @@ describe('getLayoutMode Tests', () => {
 
     // lowHeightDesktop: height >= 500 && height < 650, ratio >= 1.9
     expect(getLayoutMode(1366, 620)).toBe('lowHeightDesktop');
-    expect(getLayoutMode(1440, 620)).toBe('lowHeightDesktop');
+    expect(getLayoutMode(1440, 620)).toBe('wideShortHeight'); // ratio = 2.32 >= 2, height = 620, width = 1440
   });
 
   it('should prioritize mobile-landscape over short-height when width < 768', () => {

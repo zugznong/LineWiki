@@ -15,13 +15,21 @@ export class StockfishMessageParser {
     if (!line.includes('score') && !line.includes('depth')) return null;
 
     const depthMatch = line.match(/(?:\bdepth\s+)(\d+)/);
+    const selDepthMatch = line.match(/(?:\bseldepth\s+)(\d+)/);
     const scoreCpMatch = line.match(/(?:\bscore\s+cp\s+)(-?\d+)/);
     const scoreMateMatch = line.match(/(?:\bscore\s+mate\s+)(-?\d+)/);
     const pvMatch = line.match(/(?:\bpv\s+)(.+)/);
     const npsMatch = line.match(/(?:\bnps\s+)(\d+)/);
     const timeMatch = line.match(/(?:\btime\s+)(\d+)/);
+    const multiPvMatch = line.match(/(?:\bmultipv\s+)(\d+)/);
+    const nodesMatch = line.match(/(?:\bnodes\s+)(\d+)/);
+    const hashfullMatch = line.match(/(?:\bhashfull\s+)(\d+)/);
 
     const depth = depthMatch ? parseInt(depthMatch[1], 10) : 0;
+    const selDepth = selDepthMatch ? parseInt(selDepthMatch[1], 10) : 0;
+    const multiPvIndex = multiPvMatch ? parseInt(multiPvMatch[1], 10) : 1;
+    const nodes = nodesMatch ? parseInt(nodesMatch[1], 10) : 0;
+    const hashFull = hashfullMatch ? parseInt(hashfullMatch[1], 10) : 0;
     
     let score: EvalScore;
     if (scoreMateMatch) {
@@ -35,12 +43,28 @@ export class StockfishMessageParser {
     const pvStr = pvMatch ? pvMatch[1] : '';
     const pvMoves = pvStr.trim().split(/\s+/).filter(Boolean);
     const pv = new PrincipalVariation(pvMoves);
-    const bestMoveUci = pvMoves[0] || '';
+    const rootMoveUci = pvMoves[0] || '';
+    const bestMoveUci = rootMoveUci;
 
     const nps = npsMatch ? parseInt(npsMatch[1], 10) : 0;
     const timeMs = timeMatch ? parseInt(timeMatch[1], 10) : 0;
 
-    return new LocalAnalysisResult(currentFen, depth, score, pv, bestMoveUci, null, 'analyzing', nps, timeMs);
+    return new LocalAnalysisResult(
+      currentFen,
+      depth,
+      score,
+      pv,
+      bestMoveUci,
+      null,
+      'analyzing',
+      nps,
+      timeMs,
+      multiPvIndex,
+      selDepth,
+      nodes,
+      hashFull,
+      rootMoveUci
+    );
   }
 
   /**

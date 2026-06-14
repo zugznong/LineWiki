@@ -1,6 +1,7 @@
 import type { Position } from '../domain/chess/Position';
 import type { ChessMove } from '../domain/chess/ChessMove';
 import { Fen } from '../domain/chess/Fen';
+import type { DrawState } from '../domain/chess/DrawState';
 
 /**
  * 전역적인 플레이 및 탐색 국면(Chess Board Position)의 상호작용 지표들을 바인딩하는 반응형 스토어입니다.
@@ -12,11 +13,13 @@ class PositionStore {
     error: string | null;
     candidateMoves: ChessMove[];
     lastMove: { from: string; to: string } | null;
+    drawState: DrawState;
   }>({
     current: null,
     error: null,
     candidateMoves: [],
-    lastMove: null
+    lastMove: null,
+    drawState: 'none'
   });
 
   /**
@@ -62,17 +65,33 @@ class PositionStore {
   }
 
   /**
+   * 현재 국면의 무승부 상태를 반환합니다.
+   */
+  public get drawState(): DrawState {
+    return this.state.drawState || 'none';
+  }
+
+  /**
    * 새로운 체스 포지션 상황을 설정하고 관련 메타데이터를 정화 및 동기화합니다.
    */
   public setPosition(
     position: Position,
     candidateMoves: ChessMove[] = [],
-    lastMove: { from: string; to: string } | null = null
+    lastMove: { from: string; to: string } | null = null,
+    drawState: DrawState = 'none'
   ) {
     this.state.current = position;
     this.state.error = null;
     this.state.candidateMoves = candidateMoves;
     this.state.lastMove = lastMove || position.lastMove;
+    this.state.drawState = drawState;
+  }
+
+  /**
+   * 무승부 상태를 직접 임의 변경합니다.
+   */
+  public setDrawState(drawState: DrawState) {
+    this.state.drawState = drawState;
   }
 
   /**

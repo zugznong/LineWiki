@@ -1,32 +1,45 @@
 /* Ultra-Wide Screen Constraints & Layout Scale Guidelines */
 
-@media (min-width: 1536px) and (min-height: 685px) {
-  /* Set max scale limits on wide viewport monitors */
+@media (min-width: 1536px) {
+  /* Set max scale limits on wide viewport monitors to prevent excessively stretched layouts */
   #position-main-area {
-    max-width: 1440px;
+    max-width: min(calc(100vw - 2rem), 1920px);
     margin-left: auto;
     margin-right: auto;
     width: 100%;
-    --col2-width: 340px;
-    --col3-width: 420px;
   }
 
-  /* Stabilize Flex & Gap sizes of our triple columns */
-  #desktop-3-column-layout {
-    gap: 1.75rem !important;
+  /* Expand 3-column layout columns and spacing on standard wide screens */
+  #desktop-3-column-layout[data-layout-mode="standard"] {
+    grid-template-columns: minmax(0, 1fr) clamp(280px, 20vw, 360px) clamp(320px, 25vw, 440px) !important;
+    gap: 1.5rem !important;
   }
 
+  /* Chessboard wrapper fluid calculations scale-up for wide screen */
   #desktop-3-column-layout #chess-board-card {
-    max-height: 800px !important;
-    max-width: 800px !important;
-  }
-
-  #desktop-3-column-layout #chess-board-wrapper {
+    width: 100% !important;
+    max-width: 720px !important;
     max-height: 100% !important;
-    max-width: 100% !important;
+  }
+}
+
+/* 21:9 or 24:10 ultra-wide cinematic monitor environments - limit max column stretch and keep it centered beautifully */
+@media (min-aspect-ratio: 21/9) and (min-width: 1600px) {
+  #position-main-area {
+    max-width: min(calc(100vw - 4rem), 1720px) !important;
+    margin-inline: auto !important;
   }
 
-  #desktop-candidate-col #candidate-move-container {
-    max-height: 640px !important;
+  #desktop-3-column-layout[data-layout-mode="standard"] {
+    grid-template-columns: minmax(0, 1fr) clamp(300px, 18vw, 380px) clamp(360px, 22vw, 460px) !important;
+    gap: 2rem !important;
+  }
+}
+
+/* Apply professional vertical layouts and alignment on extra high screens */
+@media (min-width: 1536px) and (min-height: 820px) {
+  #position-main-area {
+    display: flex !important;
+    flex-direction: column !important;
   }
 }

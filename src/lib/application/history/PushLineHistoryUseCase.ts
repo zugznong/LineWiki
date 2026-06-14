@@ -1,5 +1,6 @@
 import type { LineHistoryPort } from '../../ports/LineHistoryPort';
 import { LineHistoryNavigationUseCase } from './LineHistoryNavigationUseCase';
+import { lineHistoryStore } from '../../stores/lineHistoryStore.svelte.ts';
 
 export class PushLineHistoryUseCase {
   constructor(
@@ -11,5 +12,7 @@ export class PushLineHistoryUseCase {
     const current = this.lineHistoryPort.loadHistory().unwrapOrDefault([]);
     const updated = this.navigationUseCase.truncateAndInsert(current, newFen, moveSan, from, to, previousFen);
     this.lineHistoryPort.saveHistory(updated);
+    lineHistoryStore.invalidate();
+    lineHistoryStore.forceUpdate();
   }
 }

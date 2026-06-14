@@ -1,21 +1,41 @@
 /* Tablet / iPad Portrait Medium Layout Adjustments */
 
 @media (min-width: 768px) and (max-width: 1023px) {
+  [id="mobile-single-flow-layout"], #mobile-history-slot {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 680px !important;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1199px) {
   #mobile-single-flow-layout {
     gap: var(--spacing-card-gap);
     max-width: 680px;
     margin-left: auto;
     margin-right: auto;
     padding: 0.5rem;
+    height: 100% !important;
+    max-height: 100% !important;
+    min-height: 0 !important;
+    overflow-y: auto !important;
+    overscroll-behavior: contain !important;
+    padding-bottom: 5rem !important;
   }
 
   /* Force highly polished responsive dimensions on table layout */
-  #chess-board-wrapper {
+  #chess-board-card {
     max-width: 520px !important;
     width: 100% !important;
-    aspect-ratio: 1 / 1;
     margin-left: auto;
     margin-right: auto;
+  }
+
+  #chess-board-wrapper {
+    width: 100% !important;
+    height: 100% !important;
+    max-width: 100% !important;
+    max-height: 100% !important;
   }
 
   /* Adaptive 1-column flow for tablet with height limits */
@@ -23,32 +43,34 @@
     display: flex !important;
     flex-direction: column !important;
     gap: var(--spacing-card-gap) !important;
-    height: auto !important;
-    min-height: 0 !important;
-    max-height: none !important;
-  }
-
-  #mobile-candidate-moves-container #candidate-move-container {
+    height: min(46vh, 460px) !important;
     max-height: min(46vh, 460px) !important;
-    background-color: var(--color-bg-surface);
-    border: 1px solid var(--color-border-secondary);
-    box-shadow: var(--shadow-sm);
+    min-height: 0 !important;
   }
 
-  #mobile-candidate-moves-container #candidate-move-list {
-    overflow-y: auto !important;
-    min-height: 0 !important;
-    overscroll-behavior: contain !important;
+  #mobile-candidate-moves-container > div {
+    height: 100% !important;
+    max-height: 100% !important;
   }
 
   #bottom-panel-container {
-    height: min(58vh, 620px) !important;
-    max-height: min(58vh, 620px) !important;
-    min-height: 380px !important;
+    height: clamp(360px, 58vh, 620px) !important;
+    max-height: clamp(360px, 58vh, 620px) !important;
+    min-height: 360px !important;
     margin-top: 1rem;
     background-color: var(--color-bg-surface);
     border: 1px solid var(--color-border-secondary);
     border-radius: var(--radius-card);
     box-shadow: var(--shadow-sm);
+  }
+
+
+
+  #strip-pairs-container {
+    flex: 1 1 0% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
   }
 }

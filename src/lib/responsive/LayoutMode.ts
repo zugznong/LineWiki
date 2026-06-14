@@ -1,1 +1,1 @@
-export type LayoutMode = 'mobile' | 'mobile-landscape' | 'tablet' | 'desktop' | 'desktop-wide' | 'short-height' | 'compactDesktop' | 'lowHeightDesktop';
+export type LayoutMode = 'mobile' | 'mobile-landscape' | 'tablet' | 'desktop' | 'desktop-wide' | 'short-height' | 'compactDesktop' | 'lowHeightDesktop' | 'wideShortHeight' | 'extremeShortHeight';

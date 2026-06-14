@@ -27,58 +27,74 @@
   min-height: 0;
 }
 
+#panel-tabs-navigation {
+  padding-top: 4px !important;
+  padding-bottom: 4px !important;
+  flex-shrink: 0 !important;
+  overflow: hidden !important;
+}
+
+#panel-tabs-navigation button {
+  padding-top: 6px !important;
+  padding-bottom: 6px !important;
+}
+
 /* Engine dashboard calculations widgets */
 #engine-panel {
   display: flex;
   flex-direction: column;
   height: 100%;
+  max-height: 100%;
   min-height: 0;
+  overflow: hidden;
   background-color: transparent;
 }
 
 /* Settings customizable widgets layout and containment scroll settings */
 #settings-panel {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 0%;
   height: 100%;
   min-height: 0;
+  max-height: 100%;
   overflow-y: auto;
+  overflow-x: hidden;
   overscroll-behavior: contain;
 }
 
+/* Ensure the elements targeted for scrollbar hiding define active scroll behavior */
 #settings-panel,
+#candidate-move-list,
+#engine-summary-area,
+#mobile-single-flow-layout,
+.scrollbar-thin {
+  overflow-y: auto;
+}
+
+#settings-panel,
+#candidate-move-list,
+#bottom-panel-content,
 .scrollbar-thin,
 #engine-summary-area,
-#candidate-move-list {
-  scrollbar-width: thin;
-  scrollbar-color: var(--color-border-secondary) transparent;
+#mobile-single-flow-layout {
+  scrollbar-width: none !important; /* Firefox */
+  -ms-overflow-style: none !important; /* IE and Edge */
 }
 
 #settings-panel::-webkit-scrollbar,
+#candidate-move-list::-webkit-scrollbar,
+#bottom-panel-content::-webkit-scrollbar,
 .scrollbar-thin::-webkit-scrollbar,
 #engine-summary-area::-webkit-scrollbar,
-#candidate-move-list::-webkit-scrollbar {
-  width: 4px;
-}
-
-#settings-panel::-webkit-scrollbar-thumb,
-.scrollbar-thin::-webkit-scrollbar-thumb,
-#engine-summary-area::-webkit-scrollbar-thumb,
-#candidate-move-list::-webkit-scrollbar-thumb {
-  background-color: var(--color-border-secondary);
-  border-radius: 99px;
+#mobile-single-flow-layout::-webkit-scrollbar {
+  display: none !important; /* Chrome, Safari, Opera */
+  width: 0 !important;
+  height: 0 !important;
 }
 
 /* Coming later feature boxes overlay elements */
 #server-panel, #notes-panel, #discussion-panel {
-  animation: fadeIn 350ms cubic-bezier(0.16, 1, 0.3, 1);
+  /* fadeIn animation removed to reduce tab transition fatigue */
 }
 
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(4px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}

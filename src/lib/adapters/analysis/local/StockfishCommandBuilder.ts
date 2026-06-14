@@ -54,11 +54,133 @@ export class StockfishCommandBuilder {
   }
 
   /**
+   * Coordinates setup of position on the board utilizing starting FEN and move history.
+   * Can construct "position startpos moves ..." or "position fen <initial_fen> moves ..."
+   * which is more standard for repetition detection.
+   */
+  public static setPositionWithMoves(initialFen: string, moves: string[]): string {
+    const safe = ensureSafeFenString(initialFen);
+
+    if (safe.isFailure()) {
+      throw new UnsafeUciCommandError(
+        `안전하지 않은 초기 FEN이 UCI position 명령어 생성에 전달되었습니다: ${safe.unwrapErr().message}`
+      );
+    }
+
+    const startposFen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+    let cmd = "";
+    
+    // FEN이 시작 FEN과 일치하는 경우 startpos 처리
+    const normStart = startposFen.replace(/\s+/g, ' ').trim();
+    const normInitial = safe.unwrap().replace(/\s+/g, ' ').trim();
+    if (normStart === normInitial) {
+      cmd = "position startpos";
+    } else {
+      cmd = `position fen ${safe.unwrap()}`;
+    }
+
+    if (moves && moves.length > 0) {
+      const uciRegex = /^[a-h][1-8][a-h][1-8][qrbn]?$/;
+      const validMoves = moves.filter(m => uciRegex.test(m.trim()));
+      if (validMoves.length > 0) {
+        cmd += ` moves ${validMoves.join(' ')}`;
+      }
+    }
+
+    return cmd;
+  }
+
+  /**
    * Directs the engine to start calculating the active position up to a specified depth.
    */
   public static goDepth(depth: number = 12): string {
     const safeDepth = this.clampInteger(depth, 1, 99, 12);
     return `go depth ${safeDepth}`;
+  }
+
+  /**
+   * Configures the threads option.
+   */
+  public static setThreads(threads: number): string {
+    const safeThreads = this.clampInteger(threads, 1, 1024, 1);
+    return `setoption name Threads value ${safeThreads}`;
+  }
+
+  /**
+   * Configures the Hash size (in MB).
+   */
+  public static setHash(hashMb: number): string {
+    const safeHash = this.clampInteger(hashMb, 16, 33554432, 16);
+    return `setoption name Hash value ${safeHash}`;
+  }
+
+  /**
+   * Configures the MultiPV calculation depth limit / mode.
+   */
+  public static setMultiPv(multiPvCount: number): string {
+    const safeMultiPv = this.clampInteger(multiPvCount, 1, 500, 1);
+    return `setoption name MultiPV value ${safeMultiPv}`;
+  }
+
+  /**
+   * Clears accumulated Hash tables to avoid transposition artifacts.
+   */
+  public static clearHash(): string {
+    return 'setoption name Clear Hash';
+  }
+
+  /**
+   * Directs the engine to compute exactly up to specific node limits.
+   */
+  public static goNodes(nodes: number): string {
+    const safeNodes = this.clampInteger(nodes, 1, 2000000000, 1000000);
+    return `go nodes ${safeNodes}`;
+  }
+
+  /**
+   * Build-up a specialized go command with nodes/depth/infinite constraints and list of candidate search moves.
+   * Cleans movement syntax using strict chess coordinate regex to prevent escape commands.
+   */
+  public static go(params: {
+    depth?: number;
+    targetDepth?: number;
+    nodes?: number;
+    analysisMode?: 'depth' | 'nodes' | 'infinite';
+    searchmoves?: string[];
+  }): string {
+    let cmd = 'go';
+    
+    let mode = params.analysisMode;
+    if (!mode) {
+      if (params.targetDepth !== undefined || params.depth !== undefined) {
+        mode = 'depth';
+      } else if (params.nodes !== undefined) {
+        mode = 'nodes';
+      } else {
+        mode = 'depth';
+      }
+    }
+
+    if (mode === 'nodes' && params.nodes !== undefined) {
+      const safeNodes = this.clampInteger(params.nodes, 1, 2000000000, 1000000);
+      cmd += ` nodes ${safeNodes}`;
+    } else if (mode === 'infinite') {
+      cmd += ' infinite';
+    } else {
+      // depth 모드
+      const depth = params.targetDepth ?? params.depth ?? 12;
+      const safeDepth = this.clampInteger(depth, 1, 99, 12);
+      cmd += ` depth ${safeDepth}`;
+    }
+
+    if (params.searchmoves && params.searchmoves.length > 0) {
+      const uciRegex = /^[a-h][1-8][a-h][1-8][qrbn]?$/;
+      const validMoves = params.searchmoves.filter(m => uciRegex.test(m.trim()));
+      if (validMoves.length > 0) {
+        cmd += ` searchmoves ${validMoves.join(' ')}`;
+      }
+    }
+    return cmd;
   }
 
   /**
@@ -69,6 +191,13 @@ export class StockfishCommandBuilder {
   }
 
   /**
+   * Commands the engine that the next position command belongs to a new game.
+   */
+  public static uciNewGame(): string {
+    return 'ucinewgame';
+  }
+
+  /**
    * Commands the engine to terminate and release all allocated thread memory resources.
    */
   public static quit(): string {
@@ -76,7 +205,8 @@ export class StockfishCommandBuilder {
   }
 
   /**
-   * Convenience builder containing typical startup configurations to secure stable multi-threading or hash parameters.
+   * [Test/Legacy Only] Convenience builder containing typical startup configurations to secure stable multi-threading or hash parameters.
+   * 실제 엔진 초기화 구동 시에는 uci, setoption, isready 를 직접 세부 순차 제어하므로, 이 헬퍼는 테스트 및 검격 전용으로 사용 분리합니다.
    */
   public static setupEngine(hashMb: number = 16, threads: number = 1): string[] {
     const safeHash = this.clampInteger(hashMb, 16, 4096, 16);
@@ -84,8 +214,8 @@ export class StockfishCommandBuilder {
 
     return [
       this.uci(),
-      `setoption name Hash value ${safeHash}`,
       `setoption name Threads value ${safeThreads}`,
+      `setoption name Hash value ${safeHash}`,
       this.isReady()
     ];
   }

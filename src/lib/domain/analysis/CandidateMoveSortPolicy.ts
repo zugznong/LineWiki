@@ -1,4 +1,5 @@
 import type { EngineMoveEvaluation, MergedMoveEvaluation } from './AnalysisTypes';
+import { parseMoveAnnotation, getMoveAnnotationCount, getMoveAnnotationScore } from '../chess/MoveAnnotation';
 
 export function getEvalScoreValue(evalItem: EngineMoveEvaluation | MergedMoveEvaluation | undefined | null): number | null {
   if (!evalItem || !evalItem.score) return null;
@@ -13,11 +14,50 @@ export function getEvalScoreValue(evalItem: EngineMoveEvaluation | MergedMoveEva
   return score.value;
 }
 
-export function getMovePriority(m: { san: string; promotion?: string | null }) {
-  if (m.san.includes('#') || m.san.includes('+')) return 4;
-  if (m.san.includes('x')) return 3;
-  if (m.promotion || m.san.includes('=')) return 2;
-  return 1;
+export function getMovePriority(m: { san: string; promotion?: string | null }): number {
+  const annotation = parseMoveAnnotation(m.san);
+  return getMoveAnnotationScore(annotation);
+}
+
+/**
+ * 정렬 tie-breaker를 수행합니다.
+ * 순서: annotationCount desc -> mate desc -> check desc -> capture desc -> promotion desc -> SAN asc
+ */
+export function compareTieBreaker(a: { san: string }, b: { san: string }): number {
+  const annA = parseMoveAnnotation(a.san);
+  const annB = parseMoveAnnotation(b.san);
+
+  const countA = getMoveAnnotationCount(annA);
+  const countB = getMoveAnnotationCount(annB);
+  if (countA !== countB) {
+    return countB - countA;
+  }
+
+  const mateA = annA.isMate ? 1 : 0;
+  const mateB = annB.isMate ? 1 : 0;
+  if (mateA !== mateB) {
+    return mateB - mateA;
+  }
+
+  const checkA = annA.isCheck ? 1 : 0;
+  const checkB = annB.isCheck ? 1 : 0;
+  if (checkA !== checkB) {
+    return checkB - checkA;
+  }
+
+  const captureA = annA.isCapture ? 1 : 0;
+  const captureB = annB.isCapture ? 1 : 0;
+  if (captureA !== captureB) {
+    return captureB - captureA;
+  }
+
+  const promotionA = annA.isPromotion ? 1 : 0;
+  const promotionB = annB.isPromotion ? 1 : 0;
+  if (promotionA !== promotionB) {
+    return promotionB - promotionA;
+  }
+
+  return a.san.localeCompare(b.san);
 }
 
 export function sortCandidateMoves(
@@ -37,34 +77,28 @@ export function sortCandidateMoves(
 
       // 둘 다 평가치가 존재할 경우 평가치 기준 정렬
       if (scoreA !== null && scoreB !== null) {
-        if (turn === 'w') {
-          return scoreB - scoreA; // 높은 점수 우선 (내림차순)
-        } else {
-          return scoreA - scoreB; // 낮은 점수 우선 (오름차순)
+        if (scoreA !== scoreB) {
+          if (turn === 'w') {
+            return scoreB - scoreA; // 높은 점수 우선 (내림차순)
+          } else {
+            return scoreA - scoreB; // 낮은 점수 우선 (오름차순)
+          }
         }
+        
+        // 평가치가 같을 경우 tie-breaker 작동
+        return compareTieBreaker(a, b);
       }
 
       // 평가치가 아직 없는 경우, 존재하는 수 우선 배치
       if (scoreA !== null && scoreB === null) return -1;
       if (scoreA === null && scoreB !== null) return 1;
 
-      // 둘 다 평가치가 아직 발견되지 않았다면, 중요 전술 지표 (체크, 캡처, 프로모션) 우선순위 적용
-      const priorityA = getMovePriority(a);
-      const priorityB = getMovePriority(b);
-      if (priorityA !== priorityB) {
-        return priorityB - priorityA;
-      }
-
-      // 전술 우선순위마저 같다면 원래 합법수 리스트 순서(moves의 인덱스)를 보존
-      return moves.indexOf(a) - moves.indexOf(b);
+      // 둘 다 평가치가 아직 발견되지 않았다면, tie-breaker 작동
+      return compareTieBreaker(a, b);
     }
 
     // sortMode === 'tactical' (전술 중요도 기준 정렬)
-    const priorityA = getMovePriority(a);
-    const priorityB = getMovePriority(b);
-    if (priorityA !== priorityB) {
-      return priorityB - priorityA;
-    }
-    return moves.indexOf(a) - moves.indexOf(b);
+    return compareTieBreaker(a, b);
   });
 }
+

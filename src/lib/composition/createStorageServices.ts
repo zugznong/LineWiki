@@ -5,6 +5,7 @@ import { LoadBoardSettingsUseCase } from '../application/board/LoadBoardSettings
 import { SaveBoardSettingsUseCase } from '../application/board/SaveBoardSettingsUseCase';
 import { FlipBoardUseCase } from '../application/board/FlipBoardUseCase';
 import { SelectBoardThemeUseCase } from '../application/board/SelectBoardThemeUseCase';
+import { SelectPieceStyleUseCase } from '../application/board/SelectPieceStyleUseCase';
 import { PushLineHistoryUseCase } from '../application/history/PushLineHistoryUseCase';
 import { RestoreLineHistoryUseCase } from '../application/history/RestoreLineHistoryUseCase';
 import { ClearLineHistoryUseCase } from '../application/history/ClearLineHistoryUseCase';
@@ -19,6 +20,7 @@ const loadBoardSettings = new LoadBoardSettingsUseCase(boardSettings);
 const saveBoardSettings = new SaveBoardSettingsUseCase(boardSettings);
 const flipBoard = new FlipBoardUseCase(boardSettings);
 const selectBoardTheme = new SelectBoardThemeUseCase(boardSettings);
+const selectPieceStyle = new SelectPieceStyleUseCase(boardSettings);
 
 const restoreLineHistory = new RestoreLineHistoryUseCase(lineHistory, lineSession);
 const clearLineHistory = new ClearLineHistoryUseCase(lineHistory);
@@ -35,6 +37,7 @@ export function createStorageServices() {
     saveBoardSettings,
     flipBoard,
     selectBoardTheme,
+    selectPieceStyle,
     pushLineHistory,
     restoreLineHistory,
     clearLineHistory,

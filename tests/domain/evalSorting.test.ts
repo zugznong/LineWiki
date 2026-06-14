@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { EvalScore } from '../../src/lib/domain/analysis/EvalScore';
 import { evalSortValue, compareEvalsForTurn } from '../../src/lib/domain/analysis/evalSorting';
+import { sortCandidateMoves } from '../../src/lib/domain/analysis/CandidateMoveSortPolicy';
 
 const cp = (v: number) => ({ score: new EvalScore('cp', v) });
 const mate = (v: number) => ({ score: new EvalScore('mate', v) });
@@ -75,5 +76,27 @@ describe('compareEvalsForTurn', () => {
     const items = [cp(10), cp(50), cp(-30)];
     items.sort(compareEvalsForTurn('invalid_turn'));
     expect(items.map((i) => i.score.value)).toEqual([50, 10, -30]);
+  });
+});
+
+describe('evalSorting with annotation fallback integration', () => {
+  it('should utilize annotationCount as a secondary sort key when evaluations are equal or completely missing', () => {
+    const moves = [
+      { uci: 'h7h8q', san: 'h8=Q' },      // 주석 개수 1 (promotion)
+      { uci: 'f7f8q', san: 'fxf8=Q+' }    // 주석 개수 3 (capture + promotion + check)
+    ];
+
+    // 둘 다 평가치 없음 (undefined)
+    const sortedPlaceholder = sortCandidateMoves(moves, {}, 'w', 'engine');
+    expect(sortedPlaceholder[0].uci).toBe('f7f8q');
+
+    // 평가치가 +250cp로 정확히 동일함
+    const evaluations = {
+      'h7h8q': { moveSan: 'h8=Q', moveUci: 'h7h8q', score: new EvalScore('cp', 250), depth: 10 },
+      'f7f8q': { moveSan: 'fxf8=Q+', moveUci: 'f7f8q', score: new EvalScore('cp', 250), depth: 10 }
+    };
+    
+    const sortedEqual = sortCandidateMoves(moves, evaluations, 'w', 'engine');
+    expect(sortedEqual[0].uci).toBe('f7f8q');
   });
 });

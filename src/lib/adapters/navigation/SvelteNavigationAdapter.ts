@@ -18,22 +18,36 @@ export class SvelteNavigationAdapter {
    * 오픈 리다이렉트 및 위험 스킴(javascript:/data:) 차단을 위해 내부 절대경로(/로 시작)만 허용합니다.
    * FEN이 포함된 경로가 로그에 남지 않도록 실패 로그에는 원본 path를 출력하지 않습니다.
    */
-  public goto(path: string): void {
-    if (!isSafeInternalPath(path)) {
-      console.error('[네비게이션 보안 가드] 허용되지 않는 경로 패턴이 감지되어 이동을 거부합니다.');
-      return;
+  public goto(path: string): { success: boolean; error?: string } {
+    let normalized = path.trim();
+    if (!normalized.startsWith('/')) {
+      normalized = '/' + normalized;
+    }
+    normalized = normalized.replace(/\/+/g, '/');
+
+    if (!isSafeInternalPath(normalized)) {
+      console.error('[네비게이션 보안 가드] 허용되지 않는 경로 패턴이 감지되었습니다.');
+      return { success: false, error: '보안 정책에 위배되는 경로입니다.' };
     }
 
-    if (isBrowser) {
+    if (isBrowser && typeof window !== 'undefined' && window.location) {
+      if (window.location.pathname === normalized) {
+        return { success: true };
+      }
+
       try {
-        goto(path).catch(err => {
-          console.error('[네비게이션 오류] 이동 수행 실패:', err);
+        goto(normalized).catch(err => {
+          // FEN이 포함된 경로는 로그에 제외하고 안전한 유형만 기록
+          console.error('[네비게이션 오류] SvelteKit goto 이동 호출 실패. 경로 유형: [FEN_ROUTE_PATH]', err);
         });
+        return { success: true };
       } catch (err) {
-        console.error('[네비게이션 오류] 경로 이동 중 상호작용 오류가 감지되었습니다:', err);
+        console.error('[네비게이션 오류] 동기적 컴포넌트 마운트 라우팅 예외 감지. 경로 유형: [FEN_ROUTE_PATH]', err);
+        return { success: false, error: '라우팅 이동 도중 예상하지 못한 상호작용 오류가 발생했습니다.' };
       }
     } else {
-      console.warn('[네비게이션 경고] 서버 사이드 렌더링(SSR) 구동 단계이므로 이동 요청을 누락 방지 처리합니다.');
+      console.warn('[네비게이션 경고] 서버 사이드 구동 단계이므로 클라이언트 전용 네비게이션을 스킵합니다.');
+      return { success: true };
     }
   }
 

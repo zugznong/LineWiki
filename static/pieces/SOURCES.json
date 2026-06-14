@@ -1,0 +1,82 @@
+{
+  "cburnett": {
+    "sourceRepository": "https://github.com/lichess-org/lila",
+    "sourceDirectory": "public/piece/cburnett",
+    "sourceCommit": "4a63cc0d71c21831a445cd135f83b9b3bb47abc7",
+    "license": "GPLv2+",
+    "filenameMapping": {
+      "bB.svg": "bb.svg",
+      "bK.svg": "bk.svg",
+      "bN.svg": "bn.svg",
+      "bP.svg": "bp.svg",
+      "bQ.svg": "bq.svg",
+      "bR.svg": "br.svg",
+      "wB.svg": "wb.svg",
+      "wK.svg": "wk.svg",
+      "wN.svg": "wn.svg",
+      "wP.svg": "wp.svg",
+      "wQ.svg": "wq.svg",
+      "wR.svg": "wr.svg"
+    }
+  },
+  "chessnut": {
+    "sourceRepository": "https://github.com/lichess-org/lila",
+    "sourceDirectory": "public/piece/chessnut",
+    "sourceCommit": "4a63cc0d71c21831a445cd135f83b9b3bb47abc7",
+    "license": "Apache 2.0",
+    "filenameMapping": {
+      "bB.svg": "bb.svg",
+      "bK.svg": "bk.svg",
+      "bN.svg": "bn.svg",
+      "bP.svg": "bp.svg",
+      "bQ.svg": "bq.svg",
+      "bR.svg": "br.svg",
+      "wB.svg": "wb.svg",
+      "wK.svg": "wk.svg",
+      "wN.svg": "wn.svg",
+      "wP.svg": "wp.svg",
+      "wQ.svg": "wq.svg",
+      "wR.svg": "wr.svg"
+    }
+  },
+  "merida": {
+    "sourceRepository": "https://github.com/lichess-org/lila",
+    "sourceDirectory": "public/piece/merida",
+    "sourceCommit": "4a63cc0d71c21831a445cd135f83b9b3bb47abc7",
+    "license": "GPLv2+",
+    "filenameMapping": {
+      "bB.svg": "bb.svg",
+      "bK.svg": "bk.svg",
+      "bN.svg": "bn.svg",
+      "bP.svg": "bp.svg",
+      "bQ.svg": "bq.svg",
+      "bR.svg": "br.svg",
+      "wB.svg": "wb.svg",
+      "wK.svg": "wk.svg",
+      "wN.svg": "wn.svg",
+      "wP.svg": "wp.svg",
+      "wQ.svg": "wq.svg",
+      "wR.svg": "wr.svg"
+    }
+  },
+  "rhosgfx": {
+    "sourceRepository": "https://github.com/lichess-org/lila",
+    "sourceDirectory": "public/piece/rhosgfx",
+    "sourceCommit": "4a63cc0d71c21831a445cd135f83b9b3bb47abc7",
+    "license": "CC0 1.0",
+    "filenameMapping": {
+      "bB.svg": "bb.svg",
+      "bK.svg": "bk.svg",
+      "bN.svg": "bn.svg",
+      "bP.svg": "bp.svg",
+      "bQ.svg": "bq.svg",
+      "bR.svg": "br.svg",
+      "wB.svg": "wb.svg",
+      "wK.svg": "wk.svg",
+      "wN.svg": "wn.svg",
+      "wP.svg": "wp.svg",
+      "wQ.svg": "wq.svg",
+      "wR.svg": "wr.svg"
+    }
+  }
+}

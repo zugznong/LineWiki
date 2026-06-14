@@ -120,3 +120,49 @@ describe('GenerateCandidateMovesUseCase & PositionStore Integration', () => {
   });
 });
 
+describe('PlayMoveUseCase Promotion Integration Tests', () => {
+  const chessEngine = new ChessJsEngineAdapter();
+  const useCase = new PlayMoveUseCase(chessEngine);
+  const promotionFen = '8/4P3/8/8/8/8/8/k6K w - - 0 1';
+
+  it('should promote White pawn to Queen when promotion flag "q" is specified', () => {
+    const result = useCase.execute(promotionFen, 'e7', 'e8', 'q');
+    expect(result.isOk()).toBe(true);
+    if (result.isOk()) {
+      const data = result.unwrap();
+      expect(data.san).toContain('=Q');
+      expect(data.nextFen).toContain('Q');
+    }
+  });
+
+  it('should promote White pawn to Rook when promotion flag "r" is specified', () => {
+    const result = useCase.execute(promotionFen, 'e7', 'e8', 'r');
+    expect(result.isOk()).toBe(true);
+    if (result.isOk()) {
+      const data = result.unwrap();
+      expect(data.san).toContain('=R');
+      expect(data.nextFen).toContain('R');
+    }
+  });
+
+  it('should promote White pawn to Bishop when promotion flag "b" is specified', () => {
+    const result = useCase.execute(promotionFen, 'e7', 'e8', 'b');
+    expect(result.isOk()).toBe(true);
+    if (result.isOk()) {
+      const data = result.unwrap();
+      expect(data.san).toContain('=B');
+      expect(data.nextFen).toContain('B');
+    }
+  });
+
+  it('should promote White pawn to Knight when promotion flag "n" is specified', () => {
+    const result = useCase.execute(promotionFen, 'e7', 'e8', 'n');
+    expect(result.isOk()).toBe(true);
+    if (result.isOk()) {
+      const data = result.unwrap();
+      expect(data.san).toContain('=N');
+      expect(data.nextFen).toContain('N');
+    }
+  });
+});
+

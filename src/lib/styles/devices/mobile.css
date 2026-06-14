@@ -6,7 +6,12 @@
     display: flex;
     flex-direction: column;
     gap: var(--spacing-item-gap);
-    padding-bottom: 2rem;
+    height: 100% !important;
+    max-height: 100% !important;
+    min-height: 0 !important;
+    overflow-y: auto !important;
+    overscroll-behavior: contain !important;
+    padding-bottom: 5rem !important;
   }
 
   /* Force Board dimensions to scale responsively based on viewport width */
@@ -34,9 +39,16 @@
     order: 2;
   }
 
-  #move-history-strip {
+  #mobile-history-slot {
     order: 3;
     margin-top: 0.25rem;
+    flex: 0 0 var(--move-history-strip-height) !important;
+    height: var(--move-history-strip-height) !important;
+    min-height: var(--move-history-strip-height) !important;
+    max-height: var(--move-history-strip-height) !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
   }
 
   /* Candidate and lists grouping in order */
@@ -45,29 +57,22 @@
     display: flex;
     flex-direction: column;
     gap: var(--spacing-card-gap);
-    height: auto !important;
-    min-height: 0 !important;
-    max-height: none !important;
-  }
-
-  #mobile-candidate-moves-container #candidate-move-container {
+    height: min(42vh, 360px) !important;
     max-height: min(42vh, 360px) !important;
-    background-color: var(--color-bg-surface);
-    border: 1px solid var(--color-border-primary);
+    min-height: 0 !important;
   }
 
-  #mobile-candidate-moves-container #candidate-move-list {
-    overflow-y: auto !important;
-    min-height: 0 !important;
-    overscroll-behavior: contain !important;
+  #mobile-candidate-moves-container > div {
+    height: 100% !important;
+    max-height: 100% !important;
   }
 
   #bottom-panel-container {
     order: 5;
     margin-top: 0.5rem;
-    height: min(62vh, 520px);
-    max-height: min(62vh, 520px);
-    min-height: 320px;
+    height: clamp(300px, 62vh, 520px) !important;
+    max-height: clamp(300px, 62vh, 520px) !important;
+    min-height: 300px !important;
     background-color: var(--color-bg-surface);
     border: 1px solid var(--color-border-primary);
     border-radius: var(--radius-card);

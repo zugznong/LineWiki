@@ -3,6 +3,7 @@ import type { ChessEnginePort } from '../../ports/ChessEnginePort';
 import { ChessMove } from '../../domain/chess/ChessMove';
 import { Fen } from '../../domain/chess/Fen';
 import { FenRuleValidator } from '../../domain/chess/FenRuleValidator';
+import type { DrawState } from '../../domain/chess/DrawState';
 
 /**
  * chess.js 라이브러리를 캡슐화하여, 도메인 영역인 ChessEnginePort 인터페이스에 맞게
@@ -73,6 +74,65 @@ export class ChessJsEngineAdapter implements ChessEnginePort {
   }
 
   /**
+   * 구체적인 무승부 상태를 계산하여 도메인 타입 DrawState를 반환합니다.
+   */
+  public getDrawState(fen: Fen | string, historyItems?: string[]): DrawState {
+    const fenStr = fen.toString();
+    try {
+      const chess = new Chess(fenStr);
+      
+      // 1. stalemate
+      if (chess.isStalemate()) {
+        return 'stalemate';
+      }
+      
+      // 2. insufficient-material
+      if (chess.isInsufficientMaterial()) {
+        return 'insufficient-material';
+      }
+
+      // 3. threefold-repetition (히스토리가 주어진 경우 직접 계산)
+      if (historyItems && historyItems.length > 0) {
+        const currentParts = fenStr.split(' ');
+        const currentKey = currentParts.slice(0, 4).join(' ');
+        
+        let matchCount = 0;
+        for (const hFen of historyItems) {
+          const hParts = hFen.split(' ');
+          if (hParts.length >= 4) {
+            const hKey = hParts.slice(0, 4).join(' ');
+            if (hKey === currentKey) {
+              matchCount++;
+            }
+          }
+        }
+        
+        if (matchCount >= 3) {
+          return 'threefold-repetition';
+        }
+      }
+
+      // 4. Fifty-move / Seventy-five-move rule (FEN 기반)
+      const parts = fenStr.split(' ');
+      if (parts.length >= 5) {
+        const halfmove = parseInt(parts[4], 10);
+        if (!isNaN(halfmove)) {
+          if (halfmove >= 150) {
+            return 'seventyfive-move';
+          }
+          if (halfmove >= 100) {
+            return 'fifty-move';
+          }
+        }
+      }
+
+      return 'none';
+    } catch {
+      return 'none';
+    }
+  }
+
+  /**
    * 현재 FEN 상황에서 전개할 수 있는 상세한 장기 대수 표시법(LAN) 정보와 결과 FEN을 가진 합법 후보수 목록을 산출합니다.
    */
   public getLegalMoves(fen: Fen): ChessMove[] {
@@ -91,6 +151,20 @@ export class ChessJsEngineAdapter implements ChessEnginePort {
         });
         const resultingFen = tempChess.fen();
 
+        const isCheck = m.san.includes('+') || m.san.includes('#');
+        const isMate = m.san.includes('#');
+        const isCapture = !!m.captured || m.san.includes('x');
+        const isPromotion = !!m.promotion || m.san.includes('=');
+        const promotionPiece = m.promotion || null;
+
+        const annotation = {
+          isCapture,
+          isCheck,
+          isMate,
+          isPromotion,
+          promotionPiece
+        };
+
         return new ChessMove(
           m.from,
           m.to,
@@ -100,7 +174,8 @@ export class ChessJsEngineAdapter implements ChessEnginePort {
           m.color,
           resultingFen,
           m.captured || null,
-          m.promotion || null
+          m.promotion || null,
+          annotation
         );
       });
     } catch (err) {

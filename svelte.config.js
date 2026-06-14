@@ -7,9 +7,6 @@ const config = {
 
   kit: {
     adapter: adapter(),
-    prerender: {
-      handleUnseenRoutes: 'ignore'
-    },
     alias: {
       $lib: './src/lib'
     }

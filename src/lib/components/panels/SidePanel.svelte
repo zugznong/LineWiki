@@ -10,10 +10,10 @@
   const activeTab = $derived(panelStore.activeTab);
 </script>
 
-<div class="flex-1 flex flex-col border border-[var(--color-border-primary)] bg-[var(--color-bg-surface)] rounded-xl overflow-hidden min-h-0" id="side-panel-container">
+<div class="h-full flex-1 flex flex-col border border-[var(--color-border-primary)] bg-[var(--color-bg-surface)] rounded-xl overflow-hidden min-h-0 max-h-full" id="side-panel-container">
   <PanelTabs />
   
-  <div class="flex-1 overflow-hidden flex flex-col bg-[var(--color-bg-base)]/5 min-h-0" id="side-panel-content">
+  <div class="flex-1 flex flex-col min-h-0 max-h-full overflow-hidden" id="side-panel-content">
     {#if activeTab === 'engine'}
       <EnginePanel />
     {:else if activeTab === 'server'}

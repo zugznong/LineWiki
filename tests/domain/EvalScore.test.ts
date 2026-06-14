@@ -18,11 +18,11 @@ describe('EvalScore Domain Entity Tests', () => {
     it('should format positive centipawn score to with dynamic decimal refinement, e.g. +0.4', () => {
       // 40 centipawns -> 0.40 -> +0.4
       const score1 = new EvalScore('cp', 40);
-      expect(score1.format()).toBe('+0.4');
+      expect(score1.format()).toBe('+0.40');
 
       // 150 centipawns -> 1.50 -> +1.5
       const score2 = new EvalScore('cp', 150);
-      expect(score2.format()).toBe('+1.5');
+      expect(score2.format()).toBe('+1.50');
 
       // 156 centipawns -> 1.56 -> +1.56
       const score3 = new EvalScore('cp', 156);
@@ -32,7 +32,7 @@ describe('EvalScore Domain Entity Tests', () => {
     it('should format negative centipawn score correctly', () => {
       // -250 centipawns -> -2.50 -> -2.5
       const score1 = new EvalScore('cp', -250);
-      expect(score1.format()).toBe('-2.5');
+      expect(score1.format()).toBe('-2.50');
 
       // -85 centipawns -> -0.85 -> -0.85 (or clean representation)
       const score2 = new EvalScore('cp', -85);
@@ -41,11 +41,11 @@ describe('EvalScore Domain Entity Tests', () => {
 
     it('should format draw or flat center evaluation to exactly 0.0', () => {
       const score1 = new EvalScore('cp', 0);
-      expect(score1.format()).toBe('0.0');
+      expect(score1.format()).toBe('0.00');
 
       // Edge case representation representing values that slice to zero
       const score2 = new EvalScore('cp', -0.1);
-      expect(score2.format()).toBe('0.0');
+      expect(score2.format()).toBe('0.00');
     });
 
     it('should format positive mate score to prefix M, e.g. M10', () => {

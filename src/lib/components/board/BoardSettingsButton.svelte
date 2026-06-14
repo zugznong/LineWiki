@@ -1,5 +1,6 @@
 <script lang="ts">
   import { ArrowUpDown, Settings } from '@lucide/svelte';
+  import { tick } from 'svelte';
   import { createAppServices } from '$lib/composition/createAppServices';
   import { panelStore } from '$lib/stores/panelStore.svelte.ts';
   import { viewportStore } from '$lib/stores/viewportStore.svelte.ts';
@@ -9,11 +10,14 @@
     services.flipBoard.execute();
   }
 
-  function handleOpenSettings() {
-    if (viewportStore.isMobile) {
-      panelStore.toggleMobileSettings();
-    } else {
-      panelStore.setDesktopActiveTab('settings');
+  async function handleOpenSettings() {
+    panelStore.setActiveTab('settings');
+    if (!viewportStore.usesDesktopShell) {
+      await tick();
+      const container = document.getElementById('bottom-panel-container');
+      if (container) {
+        container.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
     }
   }
 </script>
@@ -35,7 +39,7 @@
     aria-label="보드 설정 열기"
     id="open-settings-shortcut-btn"
   >
-    <Settings size={13} class="text-emerald-400 animate-[spin_10s_linear_infinite]" />
+    <Settings size={13} class="text-emerald-400" />
     <span>테마 & 설정</span>
   </button>
 </div>

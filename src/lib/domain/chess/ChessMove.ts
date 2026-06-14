@@ -1,4 +1,5 @@
 import type { Color, PieceType, SquareName, MoveSan, MoveUci } from './ChessTypes';
+import type { MoveAnnotation } from './MoveAnnotation';
 
 export class ChessMove {
   constructor(
@@ -10,6 +11,7 @@ export class ChessMove {
     public readonly color: Color,
     public readonly resultingFen: string,
     public readonly captured: PieceType | string | null = null,
-    public readonly promotion: PieceType | string | null = null
+    public readonly promotion: PieceType | string | null = null,
+    public readonly annotation?: MoveAnnotation
   ) {}
 }

@@ -8,7 +8,7 @@
   }>();
 </script>
 
-<div class="flex-1 flex flex-col justify-center px-4 py-12 select-none" id="start-page-shell">
+<div class="flex-1 flex flex-col justify-start px-4 py-12 select-none min-h-dvh overflow-visible" id="start-page-shell">
   <div class="w-full max-w-4xl mx-auto space-y-10">
     <StartPageHeader />
     <FenInputCard />

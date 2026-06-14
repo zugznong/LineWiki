@@ -13,6 +13,12 @@ export class LocalAnalysisResult {
     public readonly bestMoveSan: string | null = null,
     public readonly state: AnalysisState = 'completed',
     public readonly nps: number = 0,
-    public readonly timeMs: number = 0
+    public readonly timeMs: number = 0,
+    public readonly multiPvIndex: number = 1,
+    public readonly selDepth: number = 0,
+    public readonly nodes: number = 0,
+    public readonly hashFull: number = 0,
+    public readonly rootMoveUci: string = '',
+    public readonly analysisId?: string
   ) {}
 }

@@ -4,12 +4,13 @@
   import ComingSoonSettingRow from './ComingSoonSettingRow.svelte';
   import { Eye, Settings2, Sparkles, BookOpen } from '@lucide/svelte';
   import { boardStore } from '$lib/stores/boardStore.svelte.ts';
+  import { BoardTheme } from '$lib/domain/board/BoardTheme';
 
   const currentTheme = $derived(boardStore.themeName);
   const currentPieceStyle = $derived(boardStore.pieceStyle);
 </script>
 
-<div class="space-y-5" id="board-settings-panel">
+<div class="space-y-5 min-h-0 min-w-0 max-w-full box-border" id="board-settings-panel">
   <!-- 현재 보드 메인 정보 및 활성 상태 -->
   <div class="bg-[var(--color-bg-card)]/30 border border-[var(--color-border-primary)]/60 rounded-xl p-4 space-y-3">
     <div class="flex items-center gap-1.5 text-xs font-bold text-slate-400 uppercase tracking-widest">
@@ -33,10 +34,10 @@
   </div>
 
   <!-- 예쁘게 렌더링된 Classic Green 보드 컴포넌트 미리보기 -->
-  <BoardThemePreview />
+  <BoardThemePreview theme={BoardTheme.getTheme(boardStore.themeName)} />
 
   <!-- 유니코드 백/흑 기물 샘플 표시 -->
-  <PieceStylePreview />
+  <PieceStylePreview pieceStyle={boardStore.pieceStyle} />
 
   <!-- 향후 추가될 준비 중인 기능 목록 (Future pipeline) -->
   <div class="space-y-3 pt-2">

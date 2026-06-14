@@ -24,7 +24,9 @@ describe('Security Headers Policy Test Suite', () => {
     expect(content).toContain("img-src 'self' data:");
 
     // should check there is no unsafe-eval or wildcards
-    expect(content).not.toContain('unsafe-eval');
+    // Only exact 'unsafe-eval' is blocked; 'wasm-unsafe-eval' is explicitly allowed
+    const tokens = content.split(/[\s,;']+/);
+    expect(tokens).not.toContain('unsafe-eval');
     expect(content).not.toContain('https://ai.studio');
     expect(content).not.toContain('https://*.google.com');
 
@@ -58,7 +60,6 @@ describe('Security Headers Policy Test Suite', () => {
     // 5. Check key mandatory directives are present in both static _headers CSP & securityHeaders.ts CSP
     const requiredDirectives = [
       "default-src 'self'",
-      "script-src 'self' 'unsafe-inline' blob:",
       "worker-src 'self' blob:",
       "style-src 'self' 'unsafe-inline'",
       "img-src 'self' data:",
@@ -75,9 +76,69 @@ describe('Security Headers Policy Test Suite', () => {
       expect(configContent).toContain(directive);
     }
 
+    // script-src contains self, unsafe-inline, blob: in both
+    expect(content).toContain("script-src 'self' 'unsafe-inline' blob:");
+    expect(configContent).toContain("script-src 'self' 'unsafe-inline' blob:");
+
+    // 6. Verify COOP & COEP guidelines for Stockfish 18 Multi-thread (SharedArrayBuffer) support
+    // Must contain Cross-Origin-Opener-Policy: same-origin
+    expect(content).toContain('Cross-Origin-Opener-Policy: same-origin');
+    expect(configContent).toContain('Cross-Origin-Opener-Policy');
+    expect(configContent).toContain('same-origin');
+
+    // Must contain Cross-Origin-Embedder-Policy: require-corp
+    expect(content).toContain('Cross-Origin-Embedder-Policy: require-corp');
+    expect(configContent).toContain('Cross-Origin-Embedder-Policy');
+    expect(configContent).toContain('require-corp');
+
     // Verify hooks import the config and handle appropriately
     expect(hooksContent).toContain('handle');
     expect(hooksContent).toContain('SECURITY_HEADERS');
+  });
+
+  it('should guarantee absolute COOP/COEP/CORP policy parity across _headers, securityHeaders.ts, and vite.config.ts', () => {
+    const headersPath = path.resolve('_headers');
+    const configPath = path.resolve('src/lib/security/securityHeaders.ts');
+    const viteConfigPath = path.resolve('vite.config.ts');
+
+    expect(fs.existsSync(headersPath)).toBe(true);
+    expect(fs.existsSync(configPath)).toBe(true);
+    expect(fs.existsSync(viteConfigPath)).toBe(true);
+
+    const headerText = fs.readFileSync(headersPath, 'utf-8');
+    const configText = fs.readFileSync(configPath, 'utf-8');
+    const viteConfigText = fs.readFileSync(viteConfigPath, 'utf-8');
+
+    // --- COOP (Cross-Origin-Opener-Policy) parity check ---
+    // Rule: Must consistently enforce 'same-origin' across production deployment, runtime hooks and localhost dev servers.
+    const expectedCoop = 'same-origin';
+    expect(headerText).toContain(`Cross-Origin-Opener-Policy: ${expectedCoop}`);
+    expect(configText).toContain(`'Cross-Origin-Opener-Policy': '${expectedCoop}'`);
+    expect(viteConfigText).toContain(`'Cross-Origin-Opener-Policy', '${expectedCoop}'`);
+    expect(viteConfigText).toContain(`cross-origin-opener-policy') value = '${expectedCoop}'`);
+
+    // --- COEP (Cross-Origin-Embedder-Policy) parity check ---
+    // Rule: Must consistently enforce 'require-corp' across production deployment, runtime hooks and localhost dev servers.
+    const expectedCoep = 'require-corp';
+    expect(headerText).toContain(`Cross-Origin-Embedder-Policy: ${expectedCoep}`);
+    expect(configText).toContain(`'Cross-Origin-Embedder-Policy': '${expectedCoep}'`);
+    expect(viteConfigText).toContain(`'Cross-Origin-Embedder-Policy', '${expectedCoep}'`);
+    expect(viteConfigText).toContain(`cross-origin-embedder-policy') value = '${expectedCoep}'`);
+
+    // --- CORP (Cross-Origin-Resource-Policy) parity check ---
+    // Rule: Must consistently enforce 'same-origin' across production deployment, runtime hooks and localhost dev servers.
+    const expectedCorp = 'same-origin';
+    expect(headerText).toContain(`Cross-Origin-Resource-Policy: ${expectedCorp}`);
+    expect(configText).toContain(`'Cross-Origin-Resource-Policy': '${expectedCorp}'`);
+    expect(viteConfigText).toContain(`'Cross-Origin-Resource-Policy', '${expectedCorp}'`);
+    expect(viteConfigText).toContain(`cross-origin-resource-policy') value = '${expectedCorp}'`);
+
+    // --- X-Content-Type-Options parity check ---
+    const expectedNosniff = 'nosniff';
+    expect(headerText).toContain(`X-Content-Type-Options: ${expectedNosniff}`);
+    expect(configText).toContain(`'X-Content-Type-Options': '${expectedNosniff}'`);
+    expect(viteConfigText).toContain(`'X-Content-Type-Options', '${expectedNosniff}'`);
+    expect(viteConfigText).toContain(`x-content-type-options') value = '${expectedNosniff}'`);
   });
 });
 

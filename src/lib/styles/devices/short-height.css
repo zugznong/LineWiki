@@ -1,15 +1,33 @@
 /* Low-Height & Small Laptop Screens Tuning with explicit media query parity */
 
+:root {
+  --header-bar-height: 64px; /* 실제 h-16과 일치하는 공통 상단 헤더 높이 */
+  --position-page-padding-y: 24px; /* 내부 포지션 컨테이너 페이지 상하 패딩 합 */
+  --board-toolbar-height: 32px; /* 보드 퀵 툴셋 단축 바 높이 */
+  --board-card-gap-and-padding: 40px; /* 데스크톱 3열 카드 보드 패딩 및 행 마진 */
+  --layout-row-gap: 16px; /* 추가적인 행 간격 마진 */
+
+  --board-max-height-deduction: calc(
+    var(--header-bar-height) + 
+    var(--position-page-padding-y) + 
+    var(--board-toolbar-height) + 
+    var(--board-card-gap-and-padding) + 
+    var(--layout-row-gap) + 
+    var(--move-history-strip-height)
+  );
+  --board-calculated-max-height: calc(100dvh - var(--board-max-height-deduction));
+}
+
 /* 1. lowHeightDesktop (getLayoutMode ratio >= 1.9 & height 500~649) */
 @media (min-width: 1024px) and (min-height: 500px) and (max-height: 649px) and (min-aspect-ratio: 19/10) {
   #desktop-3-column-layout #chess-board-wrapper {
-    max-height: calc(100vh - 150px) !important;
+    max-height: var(--board-calculated-max-height) !important;
   }
 
-  /* Shrink the auxiliary moves list in height to secure room */
+  /* Shrink the auxiliary moves list in height to secure room with a safe minimum clamp */
   #desktop-candidate-col #candidate-move-container {
-    height: 160px !important;
-    max-height: 160px !important;
+    height: clamp(220px, calc(100dvh - 180px), 420px) !important;
+    max-height: clamp(220px, calc(100dvh - 180px), 420px) !important;
     background-color: var(--color-bg-surface);
     border: 1px solid var(--color-border-primary);
   }
@@ -30,13 +48,13 @@
 /* 2. compactDesktop (getLayoutMode ratio >= 1.5 & width 1024~1199 & height 600~684) */
 @media (min-width: 1024px) and (max-width: 1199px) and (min-height: 600px) and (max-height: 684px) and (min-aspect-ratio: 15/10) {
   #desktop-3-column-layout #chess-board-wrapper {
-    max-height: calc(100vh - 170px) !important;
+    max-height: var(--board-calculated-max-height) !important;
   }
 
-  /* Shrink the auxiliary moves list in height to secure room */
+  /* Shrink the auxiliary moves list in height to secure room with a safe minimum clamp */
   #desktop-candidate-col #candidate-move-container {
-    height: 180px !important;
-    max-height: 180px !important;
+    height: clamp(220px, calc(100dvh - 180px), 420px) !important;
+    max-height: clamp(220px, calc(100dvh - 180px), 420px) !important;
     background-color: var(--color-bg-surface);
     border: 1px solid var(--color-border-primary);
   }
@@ -57,12 +75,12 @@
 /* 3. General shortHeight / short-height styling (getLayoutMode height < 600/650) */
 @media (max-height: 649px) and (min-width: 1024px) {
   #desktop-3-column-layout #chess-board-wrapper {
-    max-height: calc(100vh - 160px) !important;
+    max-height: var(--board-calculated-max-height) !important;
   }
 
   #desktop-candidate-col #candidate-move-container {
-    height: 160px !important;
-    max-height: 160px !important;
+    height: clamp(220px, calc(100dvh - 180px), 420px) !important;
+    max-height: clamp(220px, calc(100dvh - 180px), 420px) !important;
     background-color: var(--color-bg-surface);
     border: 1px solid var(--color-border-primary);
   }
@@ -78,4 +96,154 @@
     overflow-y: auto !important;
     background-color: var(--color-bg-surface);
   }
+}
+
+/* 낮은 높이 데스크톱 환경에서는 중앙 정렬을 취소하고 flex-start(상단 정렬)로 되돌림 (wideShortHeight 제외한 일반 데스크톱용) */
+@media (max-height: 699px) and (min-width: 1024px) {
+  #position-main-area {
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: flex-start !important;
+    align-items: flex-start !important;
+    --desktop-col-align: flex-start !important; /* 상단 밀착을 보장하기 위한 공통 vertical alignment 덮어쓰기 */
+  }
+
+  /* 3열 레이아웃도 높이가 낮을 땐 상단 밀착 및 자체 정렬을 수직 flex-start로 고정 */
+  #desktop-3-column-layout {
+    min-height: auto !important;
+    height: 100% !important;
+    margin-block: 0 !important;
+    flex-wrap: nowrap !important;
+    align-items: flex-start !important;
+  }
+}
+
+/* 4. wideShortHeight Layout Mode Styling (min-width: 1440px and max-height: 699px and min-aspect-ratio: 2/1) */
+@media (min-width: 1440px) and (max-height: 699px) and (min-aspect-ratio: 2/1) {
+  #desktop-3-column-layout[data-layout-mode="wide-short"] {
+    display: grid !important;
+    grid-template-areas: 
+      "board candidate"
+      "board side-panel" !important;
+    grid-template-columns: minmax(0, 1fr) 360px !important;
+    grid-template-rows: 200px minmax(0, 1fr) !important;
+    height: 100% !important;
+    max-height: 100% !important;
+    min-height: 0 !important;
+    width: 100% !important;
+    overflow: hidden !important;
+    gap: var(--spacing-card-gap, 1rem) !important;
+  }
+
+  #desktop-3-column-layout[data-layout-mode="wide-short"] #desktop-board-col {
+    grid-area: board;
+    min-width: 0 !important;
+    height: 100% !important;
+  }
+
+  #desktop-3-column-layout[data-layout-mode="wide-short"] #desktop-candidate-col {
+    grid-area: candidate;
+    height: 200px !important;
+    max-height: 200px !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+    display: flex !important;
+    flex-direction: column !important;
+  }
+
+  #desktop-3-column-layout[data-layout-mode="wide-short"] #desktop-candidate-col #candidate-move-container {
+    height: 100% !important;
+    max-height: 100% !important;
+    min-height: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    overflow: hidden !important;
+  }
+
+  #desktop-3-column-layout[data-layout-mode="wide-short"] #desktop-candidate-col #candidate-move-list {
+    flex: 1 1 0% !important;
+    height: 100% !important;
+    min-height: 0 !important;
+    overflow-y: auto !important;
+  }
+
+  #desktop-3-column-layout[data-layout-mode="wide-short"] #desktop-side-panel-col {
+    grid-area: side-panel;
+    min-height: 0 !important;
+    height: 100% !important;
+    max-height: 100% !important;
+    display: flex !important;
+    flex-direction: column !important;
+    overflow: hidden !important;
+  }
+
+  #desktop-3-column-layout[data-layout-mode="wide-short"] #desktop-side-panel-col #side-panel-container {
+    height: 100% !important;
+    max-height: 100% !important;
+    min-height: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    overflow: hidden !important;
+  }
+
+  #desktop-3-column-layout[data-layout-mode="wide-short"] #desktop-side-panel-col #side-panel-content {
+    flex: 1 1 0% !important;
+    height: 100% !important;
+    max-height: 100% !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+  }
+}
+
+/* 5. Move history strip height optimization for small or low-height laptop displays */
+@media (max-height: 699px) and (min-width: 1024px) {
+  :root {
+    --move-history-strip-height: 38px;
+  }
+}
+
+/* 극단적으로 낮은 높이에서의전체 세로 스크롤 fallback 허용 (콘텐츠 잘림 방지 및 extremeShortHeight 명시적 대응) */
+#desktop-3-column-layout[data-layout-mode="extreme-short"] {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: flex-start !important;
+  min-height: auto !important;
+  height: 100% !important;
+  max-height: 100% !important;
+  overflow: hidden !important;
+  flex-wrap: nowrap !important;
+}
+
+#position-main-area:has(#desktop-3-column-layout[data-layout-mode="extreme-short"]) {
+  min-height: auto !important;
+  height: 100% !important;
+  max-height: 100% !important;
+}
+
+#desktop-3-column-layout[data-layout-mode="extreme-short"] #desktop-board-col,
+#desktop-3-column-layout[data-layout-mode="extreme-short"] #desktop-candidate-col,
+#desktop-3-column-layout[data-layout-mode="extreme-short"] #desktop-side-panel-col {
+  height: 100% !important;
+  max-height: 100% !important;
+  min-height: auto !important;
+}
+
+@media (max-height: 620px) and (min-width: 1024px) {
+  #position-main-area {
+    overflow-y: auto !important;
+  }
+  #desktop-3-column-layout {
+    overflow: visible !important;
+    height: auto !important;
+    max-height: none !important;
+  }
+  #desktop-board-col {
+    height: auto !important;
+    max-height: none !important;
+  }
+}
+
+#mobile-history-slot,
+#desktop-history-slot {
+  flex-shrink: 0 !important;
 }

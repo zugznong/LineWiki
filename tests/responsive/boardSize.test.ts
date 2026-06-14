@@ -125,5 +125,104 @@ describe('calculateBoardSize Tests', () => {
     expect(board.squareSize).toBe(52);
     expect(board.size).toBe(416);
   });
+
+  it('should compute specific viewports correctly and keep board size below viewport height', () => {
+    // 1920x540
+    const b1920x540 = calculateBoardSize(1920, 540);
+    expect(b1920x540.size).toBeLessThan(540);
+    expect(b1920x540.size).toBe(416);
+
+    // 1920x620
+    const b1920x620 = calculateBoardSize(1920, 620);
+    expect(b1920x620.size).toBeLessThan(620);
+    expect(b1920x620.size).toBe(496);
+
+    // 2560x720
+    // In desktop-wide, targetSize = Math.min(...) height limit (720 - 160) = 560
+    const b2560x720 = calculateBoardSize(2560, 720);
+    expect(b2560x720.size).toBeLessThan(720);
+    expect(b2560x720.size).toBe(560);
+
+    // 2560x1080
+    const b2560x1080 = calculateBoardSize(2560, 1080);
+    expect(b2560x1080.size).toBeLessThan(1080);
+    expect(b2560x1080.size).toBe(800);
+
+    // 1536x686
+    const b1536x686 = calculateBoardSize(1536, 686);
+    expect(b1536x686.size).toBeLessThan(686);
+    expect(b1536x686.size).toBeLessThanOrEqual(686 - 120);
+
+    // 1680x720
+    const b1680x720 = calculateBoardSize(1680, 720);
+    expect(b1680x720.size).toBeLessThan(720);
+    expect(b1680x720.size).toBeLessThanOrEqual(720 - 120);
+    
+    // Explicit regression check to verify sizes strictly stay within height bounds on wide/desktop layouts
+    const cases = [
+      { w: 1920, h: 620 },
+      { w: 2560, h: 720 },
+      { w: 2560, h: 1080 },
+      { w: 1536, h: 686 },
+      { w: 1680, h: 720 }
+    ];
+    for (const c of cases) {
+      const res = calculateBoardSize(c.w, c.h);
+      expect(res.size).toBeLessThan(c.h);
+      // For desktop layouts, margins and topbars are strictly expected. Ensure height-derived limit constraint works
+      expect(res.size).toBeLessThanOrEqual(c.h - 120);
+    }
+
+    // 1366x768
+    const b1366x768 = calculateBoardSize(1366, 768);
+    expect(b1366x768.size).toBeLessThan(768);
+    expect(b1366x768.size).toBe(600);
+
+    // 1200x800
+    const b1200x800 = calculateBoardSize(1200, 800);
+    expect(b1200x800.size).toBeLessThan(800);
+    expect(b1200x800.size).toBe(600);
+
+    // 1199x800 -> desktop (since 1024 <= width < 1440)
+    const b1199x800 = calculateBoardSize(1199, 800);
+    expect(b1199x800.size).toBeLessThan(800);
+    expect(b1199x800.size).toBe(600);
+
+    // 768x1024 -> tablet
+    const b768x1024 = calculateBoardSize(768, 1024);
+    expect(b768x1024.size).toBeLessThan(1024);
+    expect(b768x1024.size).toBe(600);
+
+    // 390x844 -> mobile
+    const b390x844 = calculateBoardSize(390, 844);
+    expect(b390x844.size).toBeLessThan(844);
+    expect(b390x844.size).toBe(352);
+  });
+
+  it('should guarantee that wide/short-height cases obey pure function contracts without delays and never exceed layout height limits', () => {
+    // 1. Purity contract: Same inputs must produce exactly identical output immediately
+    const inputs = [
+      { w: 1600, h: 1000 },
+      { w: 1600, h: 700 },
+      { w: 900, h: 500 }, // short-height
+      { w: 1200, h: 550 }, // short-height
+    ];
+
+    for (const tuple of inputs) {
+      const first = calculateBoardSize(tuple.w, tuple.h);
+      const second = calculateBoardSize(tuple.w, tuple.h);
+      expect(first.size).toBe(second.size);
+      expect(first.squareSize).toBe(second.squareSize);
+
+      // Height upper limit constraints
+      if (tuple.h === 500 || tuple.h === 550) {
+        // short-height limits
+        expect(first.size).toBeLessThanOrEqual(tuple.h - 80);
+      } else {
+        // wide limits
+        expect(first.size).toBeLessThanOrEqual(tuple.h - 120);
+      }
+    }
+  });
 });
 

@@ -1,58 +1,84 @@
 /* Mobile Landscape Mode Configuration */
 
-@media (max-height: 480px) and (orientation: landscape) {
-  /* Set side-by-side or fluid flex configuration to prevent screen cutoff */
+@media (max-height: 480px) and (max-width: 1023px) and (orientation: landscape) {
+  /* Set structured CSS Grid configuration to prevent screen cutoff and wrap anomalies */
   #mobile-single-flow-layout {
-    flex-direction: row !important;
-    flex-wrap: wrap !important;
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
     gap: 1rem !important;
     overflow-y: auto !important;
-    align-items: flex-start !important;
+    align-content: start !important;
+  }
+
+  #mobile-board-toolbar {
+    grid-column: 1 / -1 !important;
+    width: 100% !important;
   }
 
   /* Force board size to rely strictly on vertical heights */
-  #chess-board-card {
-    height: calc(100vh - 80px) !important;
-    width: calc(100vh - 80px) !important;
-    max-height: 320px !important;
+  #mobile-board-card {
+    grid-column: 1 / 2 !important;
+    width: 100% !important;
     max-width: 320px !important;
+    margin-inline: auto !important;
+    height: auto !important;
     aspect-ratio: 1 / 1;
   }
 
-  #chess-board-wrapper {
+  #mobile-board-card #chess-board-card {
     width: 100% !important;
     height: 100% !important;
-    max-width: 100% !important;
+    min-height: 0 !important;
+    padding: 0.5rem !important;
+  }
+
+  #mobile-board-card #chess-board-wrapper {
+    width: 100% !important;
+    height: 100% !important;
+  }
+
+  /* Quick-fix candidate moves column placed at row 2 right side */
+  #mobile-single-flow-layout #mobile-candidate-moves-container {
+    grid-column: 2 / 3 !important;
+    width: 100% !important;
+    display: flex !important;
+    flex-direction: column !important;
+    height: 320px !important;
+    max-height: 320px !important;
+    min-height: 0 !important;
+  }
+
+  #mobile-candidate-moves-container > div {
+    height: 100% !important;
     max-height: 100% !important;
   }
 
-  /* Quick fix columns side layout */
-  #mobile-single-flow-layout #mobile-candidate-moves-container {
-    flex-direction: row !important;
-    flex: 1 1 0% !important;
-    min-width: 250px;
-    height: auto !important;
-    min-height: 0 !important;
-    max-height: none !important;
+  /* Session history flow is anchored strictly below the board and candidates */
+  #mobile-history-slot {
+    grid-column: 1 / -1 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    height: var(--move-history-strip-height) !important;
+    min-height: var(--move-history-strip-height) !important;
+    max-height: var(--move-history-strip-height) !important;
+    margin-top: 0.5rem !important;
   }
-
-  #mobile-candidate-moves-container #candidate-move-container {
-    max-height: calc(100vh - 120px) !important;
-  }
-
-  #mobile-candidate-moves-container #candidate-move-list {
-    overflow-y: auto !important;
-    min-height: 0 !important;
-    overscroll-behavior: contain !important;
+  
+  #move-history-strip {
+    width: 100% !important;
   }
   
   #bottom-panel-container {
+    grid-column: 1 / -1 !important;
     width: 100% !important;
     max-height: calc(100vh - 96px) !important;
     min-height: 240px !important;
+    margin-top: 0.5rem !important;
   }
 
   #bottom-panel-content {
     overflow: hidden !important;
   }
 }
+

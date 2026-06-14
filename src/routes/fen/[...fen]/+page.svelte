@@ -10,6 +10,7 @@
 
   let { data } = $props();
   let lastAnalyzedFen = '';
+  let currentGeneration = 0;
 
   function updateHighlightOnly(fen: string) {
     let lastMove = null;
@@ -28,24 +29,36 @@
   }
 
   function analyzeFen(fen: string) {
-    if (lastAnalyzedFen === fen) {
+    const normalizedFen = Fen.create(fen).map(f => f.toString()).unwrapOrDefault(fen);
+    if (lastAnalyzedFen === normalizedFen) {
       return;
     }
-    lastAnalyzedFen = fen;
 
     const services = createAppServices();
     const positionRes = services.createPosition.execute(fen);
     
     if (positionRes.isOk()) {
       const position = positionRes.unwrap();
-      const candidateMoves = services.generateCandidateMoves.execute(fen);
+      try {
+        const candidateMoves = services.generateCandidateMoves.execute(fen);
 
-      positionStore.setPosition(position, candidateMoves.moves, null);
-      
-      // Stop current active Stockfish calculation and trigger new layout analysis
-      services.stopLocalAnalysis.execute();
-      services.startLocalAnalysis.execute(fen, candidateMoves.moves);
+        const historyFens = lineHistoryStore.historyItems.map(item => item.fen);
+        const drawState = services.chessEngine.getDrawState(fen, historyFens);
+        positionStore.setPosition(position, candidateMoves.moves, null, drawState);
+        
+        // FEN이 변경될 때 가동중이던 이전 분석 세션을 정지하고 세대 번호를 증가시킵니다.
+        currentGeneration++;
+        
+        // 분석 가드 FEN 설정
+        lastAnalyzedFen = normalizedFen;
+        
+        services.startCandidateAnalysis.execute(fen, candidateMoves.moves, currentGeneration);
+      } catch (e) {
+        lastAnalyzedFen = '';
+        positionStore.setError('포지션 분석 후보수 생성 오류 발생');
+      }
     } else {
+      lastAnalyzedFen = '';
       positionStore.setError('포지션을 불러오는 중 오류가 발생했습니다.');
     }
   }
@@ -55,7 +68,6 @@
     lineHistoryStore.init();
 
     if (data.isValid && data.fen) {
-      analyzeFen(data.fen);
       updateHighlightOnly(data.fen);
     } else if (!data.isValid) {
       positionStore.setError(data.error || '유효하지 않은 FEN 포지션 코드입니다.');
@@ -68,14 +80,15 @@
     };
   });
 
-  // 1. URL의 FEN이 변경되었을 때만 분석을 재실행 (동작 캐싱 가드 적용)
+  // FEN 데이터를 Reactive 감시하여 단 한번만 안전하게 분석이 기동되도록 단일 FEN 분석 연동
   $effect(() => {
     if (data.isValid && data.fen) {
+      positionStore.setError(null);
       analyzeFen(data.fen);
     }
   });
 
-  // 2. FEN 혹은 세션 히스토리가 실시간으로 갱신될 때 언제나 하이라이트를 즉각 업데이트
+  // FEN 혹은 세션 히스토리가 실시간으로 갱신될 때 언제나 하이라이트를 즉각 업데이트
   $effect(() => {
     if (data.isValid && data.fen) {
       const _historyVersion = sessionHistoryStore.version;
