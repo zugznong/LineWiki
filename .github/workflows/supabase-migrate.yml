@@ -56,24 +56,52 @@ jobs:
             echo "supabase/migrations 디렉토리가 감지되지 않았습니다."
           fi
 
+          echo "=== 로컬 마이그레이션 무결성 검증 ==="
+          # 1) 0007 없음은 의도된 누락 (폐기됨) 명시
+          echo "로컬 마이그레이션 무결성 검증: 0007 없음은 의도된 사양(폐기됨)입니다."
+
+          # 2) 중복 version prefix 검사
+          DUP_PREFIXES=$(find supabase/migrations -maxdepth 1 -name "*.sql" -exec basename {} \; | grep -oE '^[0-9]{4}' | sort | uniq -d)
+          if [ ! -z "$DUP_PREFIXES" ]; then
+            echo "::error::Duplicate migration version prefixes detected:"
+            echo "$DUP_PREFIXES" | while read -r prefix; do
+              echo "  - Prefix $prefix is duplicated!"
+              find supabase/migrations -maxdepth 1 -name "${prefix}_*.sql"
+            done
+            exit 1
+          fi
+          echo "로컬 마이그레이션 무결성 검증 통과 (중복 프리픽스 위반 사항 없음)"
+
           echo "Linking to Supabase project..."
-          supabase link --project-ref "$SUPABASE_PROJECT_REF" --password "$SUPABASE_DB_PASSWORD" --non-interactive
+          supabase link --project-ref "$SUPABASE_PROJECT_REF" --password "$SUPABASE_DB_PASSWORD" --yes
 
           echo "=== Push 진행 전 마이그레이션 반영 상태 조회 ==="
-          supabase migration list --password "$SUPABASE_DB_PASSWORD" --non-interactive || echo "마이그레이션 리스트 획득 에러"
+          supabase migration list --password "$SUPABASE_DB_PASSWORD" || echo "마이그레이션 리스트 획득 에러"
 
           echo "Pushing database migrations..."
-          supabase db push --password "$SUPABASE_DB_PASSWORD" --non-interactive
+          supabase db push --password "$SUPABASE_DB_PASSWORD" --yes
 
           echo "=== Push 완료 후 최신 마이그레이션 반영 상태 조회 및 검증 ==="
-          MIG_LIST=$(supabase migration list --password "$SUPABASE_DB_PASSWORD" --non-interactive || echo "")
+          MIG_LIST=$(supabase migration list --password "$SUPABASE_DB_PASSWORD" || echo "")
           echo "$MIG_LIST"
 
-          echo "=== 연구 트리 전용 마이그레이션 (0016~0019) 최종 배포 검증 ==="
-          for target_mig in "0016" "0017" "0018" "0019"; do
+          echo "=== 연구 트리 및 버그 제보 전용 마이그레이션 최종 배포 정밀 검증 ==="
+          target_migrations=(
+            "0016_research_tree_nodes"
+            "0017_research_annotations"
+            "0018_research_contribution_requests"
+            "0019_research_votes_comments"
+            "0020_analysis_position_summaries"
+            "0021_bug_reports"
+            "0022_research_root_node"
+            "0023_research_line_tree"
+            "0024_research_line_occurrences"
+          )
+
+          for target_mig in "${target_migrations[@]}"; do
             if echo "$MIG_LIST" | grep -q "$target_mig"; then
               echo "✅ 마이그레이션 $target_mig 적용 확인 완료."
             else
-              echo "❌ 경고: 마이그레이션 $target_mig (연구 트리용 핵심 스키마)가 원격 DB 반영 상태에서 확인되지 않습니다. 검토 수동 보완을 해주십시오."
+              echo "❌ 경고: 마이그레이션 $target_mig 원격 DB 반영 상태에서 확인되지 않습니다. 검토 수동 보완을 해주십시오."
             fi
           done
