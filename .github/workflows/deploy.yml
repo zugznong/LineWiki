@@ -1,0 +1,310 @@
+name: Deploy to Cloudflare Pages & Verify Oracle Assets
+
+on:
+  push:
+    branches:
+      - main
+
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'What should this workflow do?'
+        required: true
+        default: 'deploy'
+        type: choice
+        options:
+          - deploy
+          - check_only
+      apply_migrations:
+        description: 'Apply target Supabase migrations? (Workflow-dispatch only)'
+        required: false
+        default: false
+        type: boolean
+      force_migration_check:
+        description: 'Force checking of migration files?'
+        required: false
+        default: false
+        type: boolean
+      skip_verification_for_hotfix:
+        description: 'Skip E2E verification tests for hotfix? (Workflow-dispatch only)'
+        required: false
+        default: false
+        type: boolean
+
+concurrency:
+  group: deploy-main
+  cancel-in-progress: true
+
+env:
+  ORACLE_HOST: ${{ secrets.ORACLE_HOST }}
+  ORACLE_USER: ${{ secrets.ORACLE_USER }}
+  ORACLE_PORT: ${{ secrets.ORACLE_PORT }}
+  ORACLE_ASSET_DIR: ${{ secrets.ORACLE_ASSET_DIR || '/var/www/linewiki-assets' }}
+
+jobs:
+  build_and_deploy:
+    name: Build and Deploy to Cloudflare Pages
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      deployments: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Enable Corepack & Prepare Pnpm
+        shell: bash
+        run: |
+          corepack enable
+          corepack prepare pnpm@11.5.2 --activate
+
+      - name: Use Node 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Detect Database and Code changes
+        id: migration_detect
+        shell: bash
+        run: |
+          # 1. Detect if migrations under supabase/migrations/ have changed
+          MIGRATIONS_CHANGED=0
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            # Check diff against the previous commit
+            MIGRATIONS_CHANGED=$(git diff --name-only HEAD^ HEAD 2>/dev/null | grep -c "supabase/migrations/" || true)
+          else
+            BEFORE_SHA="${{ github.event.before }}"
+            if [ "$BEFORE_SHA" = "0000000000000000000000000000000000000000" ] || [ -z "$BEFORE_SHA" ]; then
+              MIGRATIONS_CHANGED=$(git diff --name-only HEAD^ HEAD 2>/dev/null | grep -c "supabase/migrations/" || true)
+            else
+              MIGRATIONS_CHANGED=$(git diff --name-only $BEFORE_SHA ${{ github.sha }} 2>/dev/null | grep -c "supabase/migrations/" || true)
+            fi
+          fi
+
+          if [ "$MIGRATIONS_CHANGED" -gt 0 ]; then
+            echo "changed=true" >> $GITHUB_OUTPUT
+            echo "MIGRATIONS_CHANGED=true in git history"
+          else
+            echo "changed=false" >> $GITHUB_OUTPUT
+            echo "No migrations changed in git history"
+          fi
+
+          # 2. Detect if DB communication code changed
+          DB_CODE_CHANGED=0
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            DB_CODE_CHANGED=$(git diff --name-only HEAD^ HEAD 2>/dev/null | grep -E "^(src/lib/adapters/|src/lib/ports/|src/routes/api/|src/lib/stores/researchStore\.svelte\.ts)" -c || true)
+          else
+            BEFORE_SHA="${{ github.event.before }}"
+            if [ "$BEFORE_SHA" = "0000000000000000000000000000000000000000" ] || [ -z "$BEFORE_SHA" ]; then
+              DB_CODE_CHANGED=$(git diff --name-only HEAD^ HEAD 2>/dev/null | grep -E "^(src/lib/adapters/|src/lib/ports/|src/routes/api/|src/lib/stores/researchStore\.svelte\.ts)" -c || true)
+            else
+              DB_CODE_CHANGED=$(git diff --name-only $BEFORE_SHA ${{ github.sha }} 2>/dev/null | grep -E "^(src/lib/adapters/|src/lib/ports/|src/routes/api/|src/lib/stores/researchStore\.svelte\.ts)" -c || true)
+            fi
+          fi
+
+          if [ "$DB_CODE_CHANGED" -gt 0 ]; then
+            echo "code_changed=true" >> $GITHUB_OUTPUT
+            echo "Database key files modified: true"
+          else
+            echo "code_changed=false" >> $GITHUB_OUTPUT
+            echo "Database key files modified: false"
+          fi
+
+      - name: Handle Intended DB Migration Gate (Stop and Require Manual Execution)
+        if: ${{ github.event_name == 'push' && steps.migration_detect.outputs.changed == 'true' }}
+        shell: bash
+        run: |
+          echo "::error::[정상 중단] DB 변경 감지로 자동 배포를 의도적으로 중단했으며 Actions 수동 실행이 필요합니다."
+          echo "::error::supabase/migrations/ 폴더 내 마이그레이션 파일 변경사항이 감지되어 시스템 오작동 및 안전한 DB 관리를 위해 자동 배포가 정상적인 안전 장치로 차단되었습니다."
+          echo "::error::실제 배포를 완수하려면 다음 수동 절차를 수행하십시오:"
+          echo "::error::1. GitHub Repository의 'Actions' 탭으로 이동합니다."
+          echo "::error::2. 'Deploy to Cloudflare Pages & Verify Oracle Assets' 워크플로우를 선택합니다."
+          echo "::error::3. 우측 'Run workflow' 드롭다운을 클릭합니다."
+          echo "::error::4. 'Apply target Supabase migrations? (Workflow-dispatch only)' 옵션을 체크(true)합니다."
+          echo "::error::5. 만약 마이그레이션 이력이 예전 히스토리에만 묻혀있어 명시적 서명이 필요한 경우, 'Force checking of migration files?' 옵션도 체크(true)합니다."
+          echo "::error::6. 녹색 'Run workflow' 버튼을 눌러 수동 배포를 새로 기동해 주시기 바랍니다."
+          exit 1
+
+      - name: Warn on DB code changes without migrations
+        if: ${{ steps.migration_detect.outputs.changed == 'false' && steps.migration_detect.outputs.code_changed == 'true' }}
+        shell: bash
+        run: |
+          echo "::warning::DB communication code (adapters, ports, APIs, or researchStore) has been modified, but no new migrations under 'supabase/migrations/' were provided! Please ensure database tables and columns are already compatible with your code."
+
+      - name: Apply Database Migrations and Verify Schema Contract
+        if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.apply_migrations == 'true' && (steps.migration_detect.outputs.changed == 'true' || github.event.inputs.force_migration_check == 'true') }}
+        shell: bash
+        run: |
+          echo "=== 1. Validating migration integrity ==="
+          node scripts/ci/check-migration-integrity.mjs
+
+          echo "=== 2. Resolving credentials and linking Supabase ==="
+          if [ -z "${{ secrets.SUPABASE_ACCESS_TOKEN }}" ] || [ -z "${{ secrets.SUPABASE_DB_PASSWORD }}" ] || { [ -z "${{ secrets.SUPABASE_PROJECT_REF }}" ] && [ -z "${{ secrets.SUPABASE_PROJECT_ID }}" ]; }; then
+            echo "::error::Supabase credentials (SUPABASE_ACCESS_TOKEN, SUPABASE_DB_PASSWORD, and SUPABASE_PROJECT_REF or SUPABASE_PROJECT_ID) are required for applying migrations!"
+            exit 1
+          fi
+
+          export SUPABASE_ACCESS_TOKEN="${{ secrets.SUPABASE_ACCESS_TOKEN }}"
+          export SUPABASE_PROJECT_REF="${{ secrets.SUPABASE_PROJECT_REF || secrets.SUPABASE_PROJECT_ID }}"
+          
+          echo "Linking to Supabase project with ref: $SUPABASE_PROJECT_REF"
+          npx supabase link --project-ref "$SUPABASE_PROJECT_REF" --password "${{ secrets.SUPABASE_DB_PASSWORD }}"
+
+          echo "=== 3. Executing supabase db push ==="
+          npx supabase db push --password "${{ secrets.SUPABASE_DB_PASSWORD }}" --yes
+
+          echo "=== 4. Verifying database contracts ==="
+          if ! npx supabase db query --password "${{ secrets.SUPABASE_DB_PASSWORD }}" -f scripts/ci/check-supabase-schema-contract.sql; then
+            echo "::error::[계약 위반 배포 차단] 데이터베이스 스키마 계약 검증(schema contract)에 실패했습니다!"
+            echo "::error::누락된 필수 테이블/컬럼이 감지되는 경우 다음과 같은 심각한 오작동이 발생합니다:"
+            echo "::error::  - 'research_position_nodes' 테이블 누락 시: 오프닝 연구 트리 조회/삽입 요청 중 PostgREST 404 Not Found 혹은 API 게이트 누락 오류 발생"
+            echo "::error::  - 'research_line_occurrences' / 'research_move_edges' 테이블 누락 시: 수순 등록, 전치(transposition) 탐색, 반복 포지션 감지 스레드 불능"
+            echo "::error::  - 'MoveGlyph' 관련 스티커 인스턴스 손실 시: 사용자 기보 주석 스티커 !!, ! 등이 지도 상에 정상 저장/반영되지 않음"
+            echo "::error::기존 마이그레이션 파일(supabase/migrations/*.sql)의 복구 수준이나 구성을 확인하고, 올바른 스키마가 로드되도록 조치하십시오."
+            exit 1
+          fi
+
+          echo "=== 5. Reloading PostgREST Schema Client ==="
+          npx supabase db query --password "${{ secrets.SUPABASE_DB_PASSWORD }}" "select pg_notify('pgrst', 'reload schema');"
+
+      - name: Install Playwright Browsers with Deps
+        if: ${{ github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.mode == 'deploy') }}
+        run: npx playwright install chromium --with-deps
+
+      - name: Run E2E Verification Tests (Gate)
+        if: ${{ (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.mode == 'deploy')) && !(github.event_name == 'workflow_dispatch' && github.event.inputs.skip_verification_for_hotfix == 'true') }}
+        run: pnpm run test:verify
+        env:
+          PUBLIC_ENABLE_STORED_EVALUATION: "true"
+          ENABLE_STORED_EVALUATION: "true"
+
+      - name: Upload Test Results on Failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-test-results
+          path: |
+            test-results/
+            test-results-stockfish/
+            playwright-report/
+          if-no-files-found: ignore
+
+      - name: Validate Cloudflare Pages Project Name Configured
+        if: ${{ github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.mode == 'deploy') }}
+        shell: bash
+        run: |
+          if [ -z "${{ secrets.CLOUDFLARE_PAGES_PROJECT_NAME }}" ]; then
+            echo "::error::CLOUDFLARE_PAGES_PROJECT_NAME secret is not configured. Failing build before deployment."
+            exit 1
+          fi
+
+      - name: Validate Build Environment Variables
+        if: ${{ github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.mode == 'deploy') }}
+        shell: bash
+        run: |
+          SUPABASE_URL="${{ secrets.PUBLIC_SUPABASE_URL || vars.PUBLIC_SUPABASE_URL }}"
+          SUPABASE_KEY="${{ secrets.PUBLIC_SUPABASE_ANON_KEY || vars.PUBLIC_SUPABASE_ANON_KEY }}"
+          STOCKFISH_URL="${{ secrets.PUBLIC_STOCKFISH_FULL_BASE_URL || vars.PUBLIC_STOCKFISH_FULL_BASE_URL }}"
+          
+          if [ -z "$SUPABASE_URL" ]; then
+            echo "::error::PUBLIC_SUPABASE_URL is not set. Build aborted."
+            exit 1
+          fi
+          if [ -z "$SUPABASE_KEY" ]; then
+            echo "::error::PUBLIC_SUPABASE_ANON_KEY is not set. Build aborted."
+            exit 1
+          fi
+          if [ -z "$STOCKFISH_URL" ]; then
+            echo "::error::PUBLIC_STOCKFISH_FULL_BASE_URL is not set. Build aborted."
+            exit 1
+          fi
+
+          # 버그 신고 메일 서비스 전용 API key 점검 (선택적 활성화 변수)
+          RESEND_KEY="${{ secrets.RESEND_API_KEY || vars.RESEND_API_KEY }}"
+          if [ -z "$RESEND_KEY" ]; then
+            echo "::warning::RESEND_API_KEY is not configured. Bug report email notification service will be inactive, using database fallback instead. App will proceed to build and deploy regardless."
+          else
+            echo "RESEND_API_KEY is configured. Mail reporting system is active."
+          fi
+
+          # 🔴 [보안 이중 오염 방지망] SUPABASE_SERVICE_ROLE_KEY 같은 관리자 권한 키가 실행 중인 러너 메모리/환경 변수로 직접 활성화되어 주입되었는지 여부를 확인합니다.
+          # (단순히 repository secret에 등록되어 존재한다는 것만으로 배포를 거부하지 않으며, 실제 주입 여부 확인)
+          if [ ! -z "$SUPABASE_SERVICE_ROLE_KEY" ] || [ ! -z "$SERVICE_ROLE_KEY" ]; then
+            echo "::error::CRITICAL SECURITY BREACH: Private service role keys have been injected into active runner environment."
+            exit 1
+          fi
+
+          echo "All required public build variables are verified, and private keys are strictly segregated."
+
+      - name: Build Web App
+        if: ${{ github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.mode == 'deploy') }}
+        run: pnpm run build
+        env:
+          PUBLIC_SUPABASE_URL: ${{ secrets.PUBLIC_SUPABASE_URL || vars.PUBLIC_SUPABASE_URL }}
+          PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.PUBLIC_SUPABASE_ANON_KEY || vars.PUBLIC_SUPABASE_ANON_KEY }}
+          PUBLIC_ENABLE_SUPABASE: ${{ secrets.PUBLIC_ENABLE_SUPABASE || vars.PUBLIC_ENABLE_SUPABASE }}
+          PUBLIC_ENABLE_DEEP_RESEARCH: ${{ secrets.PUBLIC_ENABLE_DEEP_RESEARCH || vars.PUBLIC_ENABLE_DEEP_RESEARCH }}
+          PUBLIC_ENABLE_SERVER_ANALYSIS: ${{ secrets.PUBLIC_ENABLE_SERVER_ANALYSIS || vars.PUBLIC_ENABLE_SERVER_ANALYSIS }}
+          PUBLIC_ENABLE_STORED_EVALUATION: ${{ secrets.PUBLIC_ENABLE_STORED_EVALUATION || vars.PUBLIC_ENABLE_STORED_EVALUATION }}
+          PUBLIC_ENABLE_RESEARCH: ${{ secrets.PUBLIC_ENABLE_RESEARCH || vars.PUBLIC_ENABLE_RESEARCH }}
+          PUBLIC_ENABLE_DISCUSSION: ${{ secrets.PUBLIC_ENABLE_DISCUSSION || vars.PUBLIC_ENABLE_DISCUSSION }}
+          PUBLIC_STOCKFISH_FULL_BASE_URL: ${{ secrets.PUBLIC_STOCKFISH_FULL_BASE_URL || vars.PUBLIC_STOCKFISH_FULL_BASE_URL }}
+          PUBLIC_STOCKFISH_ASSET_ORIGIN: ${{ secrets.PUBLIC_STOCKFISH_ASSET_ORIGIN || vars.PUBLIC_STOCKFISH_ASSET_ORIGIN }}
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY || vars.RESEND_API_KEY }}
+
+      - name: Scan Build Output for Credentials Leak
+        if: ${{ github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.mode == 'deploy') }}
+        shell: bash
+        run: |
+          # SUPABASE_SERVICE_ROLE_KEY가 실제로 존재하고 빈 값이 아닐 때만 산출물 유출 검사 수행
+          SECRET_VAL="${{ secrets.SUPABASE_SERVICE_ROLE_KEY || secrets.SERVICE_ROLE_KEY }}"
+          if [ ! -z "$SECRET_VAL" ]; then
+            echo "Scanning build artifacts for secret leaks..."
+            # 대소문자나 인코딩 등 무관하게 빌드 산출물 디렉토리 내부에서 해당 문자열이 검출되는지 테스트
+            if grep -rI "$SECRET_VAL" .svelte-kit/ 2>/dev/null; then
+              echo "::error::CRITICAL SECURITY LEAK: Found private service role key within build artifacts!"
+              exit 1
+            fi
+            echo "Artifacts scanning complete: No secret leak detected."
+          else
+            echo "No private service role key found in secrets, leak scanning skipped."
+          fi
+
+      - name: Deploy to Cloudflare Pages
+        if: ${{ github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.mode == 'deploy') }}
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy .svelte-kit/cloudflare --project-name=${{ secrets.CLOUDFLARE_PAGES_PROJECT_NAME }}
+
+  verify_oracle_assets:
+    name: Verify Oracle Remote WASM Assets
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    continue-on-error: true
+    if: ${{ secrets.ORACLE_SSH_KEY != '' && secrets.ORACLE_HOST != '' && secrets.ORACLE_USER != '' && secrets.ORACLE_PORT != '' }}
+    steps:
+      - name: Start SSH agent
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.ORACLE_SSH_KEY }}
+
+      - name: Add known_hosts
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan -p "$ORACLE_PORT" -H "$ORACLE_HOST" >> ~/.ssh/known_hosts
+
+      - name: Check Oracle Stockfish Asset directory and files existence
+        run: |
+          ssh -p "$ORACLE_PORT" "$ORACLE_USER@$ORACLE_HOST" \
+            "test -d '$ORACLE_ASSET_DIR/stockfish' && test -f '$ORACLE_ASSET_DIR/stockfish/stockfish-18-full.wasm' && test -f '$ORACLE_ASSET_DIR/stockfish/stockfish-18-full-single.wasm'"
+
