@@ -49,12 +49,24 @@ jobs:
     permissions:
       contents: read
       deployments: write
+    outputs:
+      has_oracle_secrets: ${{ steps.check_secrets.outputs.has_oracle_secrets }}
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
+      - name: Check Oracle Secrets Presence
+        id: check_secrets
+        shell: bash
+        run: |
+          if [ ! -z "${{ secrets.ORACLE_SSH_KEY }}" ] && [ ! -z "${{ secrets.ORACLE_HOST }}" ] && [ ! -z "${{ secrets.ORACLE_USER }}" ]; then
+            echo "has_oracle_secrets=true" >> $GITHUB_OUTPUT
+          else
+            echo "has_oracle_secrets=false" >> $GITHUB_OUTPUT
+          fi
 
       - name: Enable Corepack & Prepare Pnpm
         shell: bash
@@ -144,7 +156,7 @@ jobs:
         shell: bash
         run: |
           echo "=== 1. Validating migration integrity ==="
-          node scripts/ci/check-migration-integrity.mjs
+          node .github/ci/check-migration-integrity.mjs
 
           echo "=== 2. Resolving credentials and linking Supabase ==="
           if [ -z "${{ secrets.SUPABASE_ACCESS_TOKEN }}" ] || [ -z "${{ secrets.SUPABASE_DB_PASSWORD }}" ] || { [ -z "${{ secrets.SUPABASE_PROJECT_REF }}" ] && [ -z "${{ secrets.SUPABASE_PROJECT_ID }}" ]; }; then
@@ -162,7 +174,7 @@ jobs:
           npx supabase db push --password "${{ secrets.SUPABASE_DB_PASSWORD }}" --yes
 
           echo "=== 4. Verifying database contracts ==="
-          if ! npx supabase db query --password "${{ secrets.SUPABASE_DB_PASSWORD }}" -f scripts/ci/check-supabase-schema-contract.sql; then
+          if ! npx supabase db query --password "${{ secrets.SUPABASE_DB_PASSWORD }}" -f .github/ci/check-supabase-schema-contract.sql; then
             echo "::error::[계약 위반 배포 차단] 데이터베이스 스키마 계약 검증(schema contract)에 실패했습니다!"
             echo "::error::누락된 필수 테이블/컬럼이 감지되는 경우 다음과 같은 심각한 오작동이 발생합니다:"
             echo "::error::  - 'research_position_nodes' 테이블 누락 시: 오프닝 연구 트리 조회/삽입 요청 중 PostgREST 404 Not Found 혹은 API 게이트 누락 오류 발생"
@@ -263,13 +275,14 @@ jobs:
       - name: Scan Build Output for Credentials Leak
         if: ${{ github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.mode == 'deploy') }}
         shell: bash
+        env:
+          SERVICE_ROLE_SCAN_SECRET: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY || secrets.SERVICE_ROLE_KEY }}
         run: |
           # SUPABASE_SERVICE_ROLE_KEY가 실제로 존재하고 빈 값이 아닐 때만 산출물 유출 검사 수행
-          SECRET_VAL="${{ secrets.SUPABASE_SERVICE_ROLE_KEY || secrets.SERVICE_ROLE_KEY }}"
-          if [ ! -z "$SECRET_VAL" ]; then
+          if [ ! -z "$SERVICE_ROLE_SCAN_SECRET" ]; then
             echo "Scanning build artifacts for secret leaks..."
             # 대소문자나 인코딩 등 무관하게 빌드 산출물 디렉토리 내부에서 해당 문자열이 검출되는지 테스트
-            if grep -rI "$SECRET_VAL" .svelte-kit/ 2>/dev/null; then
+            if grep -rI "$SERVICE_ROLE_SCAN_SECRET" .svelte-kit/ 2>/dev/null; then
               echo "::error::CRITICAL SECURITY LEAK: Found private service role key within build artifacts!"
               exit 1
             fi
@@ -288,23 +301,90 @@ jobs:
 
   verify_oracle_assets:
     name: Verify Oracle Remote WASM Assets
+    needs: build_and_deploy
+    if: needs.build_and_deploy.outputs.has_oracle_secrets == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     continue-on-error: true
-    if: ${{ secrets.ORACLE_SSH_KEY != '' && secrets.ORACLE_HOST != '' && secrets.ORACLE_USER != '' && secrets.ORACLE_PORT != '' }}
     steps:
+      - name: Check Oracle secrets
+        id: check_oracle_secrets
+        shell: bash
+        env:
+          ORACLE_SSH_KEY: ${{ secrets.ORACLE_SSH_KEY }}
+          ORACLE_HOST: ${{ secrets.ORACLE_HOST }}
+          ORACLE_USER: ${{ secrets.ORACLE_USER }}
+          ORACLE_PORT: ${{ secrets.ORACLE_PORT }}
+          ORACLE_ASSET_DIR: ${{ secrets.ORACLE_ASSET_DIR }}
+        run: |
+          # 1. 필수 secrets 유무 체크
+          MISSING_SECRETS=()
+          if [ -z "$ORACLE_SSH_KEY" ]; then MISSING_SECRETS+=("ORACLE_SSH_KEY"); fi
+          if [ -z "$ORACLE_HOST" ]; then MISSING_SECRETS+=("ORACLE_HOST"); fi
+          if [ -z "$ORACLE_USER" ]; then MISSING_SECRETS+=("ORACLE_USER"); fi
+
+          # 2. 선택/기본값 보정
+          PORT="$ORACLE_PORT"
+          if [ -z "$PORT" ]; then
+            PORT="22"
+          fi
+          ASSET_DIR="$ORACLE_ASSET_DIR"
+          if [ -z "$ASSET_DIR" ]; then
+            ASSET_DIR="/var/www/linewiki-assets"
+          fi
+
+          # 3. Output에 기록
+          echo "port=$PORT" >> $GITHUB_OUTPUT
+          echo "asset_dir=$ASSET_DIR" >> $GITHUB_OUTPUT
+
+          # 4. 필수 값이 하나라도 없으면 검증 skip
+          if [ ${#MISSING_SECRETS[@]} -gt 0 ]; then
+            echo "::warning::Oracle SSH secrets are incomplete. Skipping remote asset verification. Missing: ${MISSING_SECRETS[*]}"
+            echo "Oracle asset verification skipped because required Oracle secrets are not configured" >> $GITHUB_STEP_SUMMARY
+            echo "has_oracle_secrets=false" >> $GITHUB_OUTPUT
+          else
+            echo "All essential Oracle secrets are verified."
+            echo "has_oracle_secrets=true" >> $GITHUB_OUTPUT
+          fi
+
       - name: Start SSH agent
+        if: steps.check_oracle_secrets.outputs.has_oracle_secrets == 'true'
         uses: webfactory/ssh-agent@v0.9.0
         with:
           ssh-private-key: ${{ secrets.ORACLE_SSH_KEY }}
 
       - name: Add known_hosts
+        if: steps.check_oracle_secrets.outputs.has_oracle_secrets == 'true'
+        env:
+          ORACLE_HOST: ${{ secrets.ORACLE_HOST }}
         run: |
           mkdir -p ~/.ssh
-          ssh-keyscan -p "$ORACLE_PORT" -H "$ORACLE_HOST" >> ~/.ssh/known_hosts
+          ssh-keyscan -p "${{ steps.check_oracle_secrets.outputs.port }}" -H "$ORACLE_HOST" >> ~/.ssh/known_hosts
 
       - name: Check Oracle Stockfish Asset directory and files existence
+        if: steps.check_oracle_secrets.outputs.has_oracle_secrets == 'true'
+        env:
+          ORACLE_HOST: ${{ secrets.ORACLE_HOST }}
+          ORACLE_USER: ${{ secrets.ORACLE_USER }}
         run: |
-          ssh -p "$ORACLE_PORT" "$ORACLE_USER@$ORACLE_HOST" \
-            "test -d '$ORACLE_ASSET_DIR/stockfish' && test -f '$ORACLE_ASSET_DIR/stockfish/stockfish-18-full.wasm' && test -f '$ORACLE_ASSET_DIR/stockfish/stockfish-18-full-single.wasm'"
+          ssh -p "${{ steps.check_oracle_secrets.outputs.port }}" "$ORACLE_USER@$ORACLE_HOST" \
+            "test -d '${{ steps.check_oracle_secrets.outputs.asset_dir }}/stockfish' && test -f '${{ steps.check_oracle_secrets.outputs.asset_dir }}/stockfish/stockfish-18-full.wasm' && test -f '${{ steps.check_oracle_secrets.outputs.asset_dir }}/stockfish/stockfish-18-full-single.wasm'"
+
+      - name: Check Oracle remote files size
+        if: steps.check_oracle_secrets.outputs.has_oracle_secrets == 'true'
+        env:
+          ORACLE_HOST: ${{ secrets.ORACLE_HOST }}
+          ORACLE_USER: ${{ secrets.ORACLE_USER }}
+        run: |
+          ssh -p "${{ steps.check_oracle_secrets.outputs.port }}" "$ORACLE_USER@$ORACLE_HOST" \
+            "[ \$(wc -c < '${{ steps.check_oracle_secrets.outputs.asset_dir }}/stockfish/stockfish-18-full.wasm') -gt 100000 ] && [ \$(wc -c < '${{ steps.check_oracle_secrets.outputs.asset_dir }}/stockfish/stockfish-18-full-single.wasm') -gt 100000 ]"
+
+      - name: Check Oracle remote SHA checksum
+        if: steps.check_oracle_secrets.outputs.has_oracle_secrets == 'true'
+        env:
+          ORACLE_HOST: ${{ secrets.ORACLE_HOST }}
+          ORACLE_USER: ${{ secrets.ORACLE_USER }}
+        run: |
+          ssh -p "${{ steps.check_oracle_secrets.outputs.port }}" "$ORACLE_USER@$ORACLE_HOST" \
+            "sha256sum '${{ steps.check_oracle_secrets.outputs.asset_dir }}/stockfish/stockfish-18-full.wasm' '${{ steps.check_oracle_secrets.outputs.asset_dir }}/stockfish/stockfish-18-full-single.wasm'"
 

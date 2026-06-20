@@ -1,68 +1,73 @@
-name: CI
+name: Continuous Integration & E2E Verification
 
 on:
-  pull_request:
   push:
-    branches: [main]
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  schedule:
+    # Run nightly at 00:00 UTC
+    - cron: '0 0 * * *'
+  workflow_dispatch:
+    inputs:
+      run_all_stockfish:
+        description: 'Run heavy Stockfish and Slow-Stockfish E2E tests'
+        required: false
+        default: 'false'
+        type: choice
+        options:
+          - 'false'
+          - 'true'
 
-# 동일 브랜치/PR에서 새 푸시가 오면 진행 중인 실행을 취소해 자원을 절약합니다.
 concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  verify:
+  ci_verify:
+    name: Run Integrated CI Verification
     runs-on: ubuntu-latest
+    timeout-minutes: 25
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # packageManager 필드(pnpm@11.5.2)를 읽어 동일 버전 pnpm을 설치합니다.
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
+      - name: Enable Corepack & Prepare Pnpm
+        shell: bash
+        run: |
+          corepack enable
+          corepack prepare pnpm@11.5.2 --activate
 
-      - name: Setup Node
+      - name: Use Node 24
         uses: actions/setup-node@v4
         with:
-          node-version: 24
-          cache: pnpm
+          node-version: "24"
+          cache: "pnpm"
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Type check
-        run: pnpm check
+      - name: Install Playwright Browsers with Deps
+        run: npx playwright install chromium --with-deps
 
-      - name: Unit tests
-        run: pnpm test
+      - name: Run Core & Quick E2E Test Suite (test:verify)
+        run: pnpm run test:verify
 
-      # moderate 이상 취약점이 있으면 실패합니다. 현재 cookie<0.7.0(low)는 통과합니다.
-      - name: Dependency audit
-        run: pnpm audit --audit-level moderate
+      - name: Run Heavy & Slow Stockfish E2E Suites (Nightly / Manual)
+        if: ${{ github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && github.event.inputs.run_all_stockfish == 'true') }}
+        run: |
+          pnpm run test:e2e:stockfish
+          pnpm run test:e2e:stockfish:slow
 
-      - name: Build
-        run: pnpm build
-
-  e2e:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-
-      - name: Setup Node
-        uses: actions/setup-node@v4
+      - name: Gather and Upload Test Artifacts (Traces & Reports)
+        if: always()
+        uses: actions/upload-artifact@v4
         with:
-          node-version: 24
-          cache: pnpm
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Install Playwright Browsers
-        run: pnpm exec playwright install chromium --with-deps
-
-      - name: Run E2E Tests
-        run: pnpm test:e2e
+          name: playwright-ci-traces-and-results
+          path: |
+            test-results/
+            playwright-report/
+          if-no-files-found: ignore
