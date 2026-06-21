@@ -1,4 +1,4 @@
-name: Deploy LineWiki: Supabase DB, Cloudflare Pages, Oracle Assets
+name: 'Deploy LineWiki: Supabase DB, Cloudflare Pages, Oracle Assets'
 
 on:
   push:
@@ -34,12 +34,6 @@ on:
 concurrency:
   group: deploy-main
   cancel-in-progress: true
-
-env:
-  ORACLE_HOST: ${{ secrets.ORACLE_HOST }}
-  ORACLE_USER: ${{ secrets.ORACLE_USER }}
-  ORACLE_PORT: ${{ secrets.ORACLE_PORT }}
-  ORACLE_ASSET_DIR: ${{ secrets.ORACLE_ASSET_DIR || '/var/www/linewiki-assets' }}
 
 jobs:
   build_and_deploy:
@@ -149,13 +143,19 @@ jobs:
         if: ${{ github.event_name == 'workflow_dispatch' && (github.event.inputs.apply_migrations == 'true' || github.event.inputs.mode == 'check_only') && (steps.migration_detect.outputs.changed == 'true' || github.event.inputs.force_migration_check == 'true') }}
         shell: bash
         run: |
-          echo "=== 1. Validating migration integrity ==="
+          echo "=== 1. Regulating Credentials & Validating migration integrity ==="
           node .github/ci/check-migration-integrity.mjs
 
-          if [ -z "${{ secrets.SUPABASE_ACCESS_TOKEN }}" ] || [ -z "${{ secrets.SUPABASE_DB_PASSWORD }}" ] || { [ -z "${{ secrets.SUPABASE_PROJECT_REF }}" ] && [ -z "${{ secrets.SUPABASE_PROJECT_ID }}" ]; }; then
+          # SUPABASE_PROJECT_REF 단일 정규화
+          REGULATED_REF="${{ secrets.SUPABASE_PROJECT_REF || secrets.SUPABASE_PROJECT_ID }}"
+
+          if [ -z "${{ secrets.SUPABASE_ACCESS_TOKEN }}" ] || [ -z "${{ secrets.SUPABASE_DB_PASSWORD }}" ] || [ -z "$REGULATED_REF" ]; then
             echo "::error::Supabase credentials (SUPABASE_ACCESS_TOKEN, SUPABASE_DB_PASSWORD, and SUPABASE_PROJECT_REF or SUPABASE_PROJECT_ID) are required!"
             exit 1
           fi
+
+          # 환경 변수로 명시적으로 등록하여 이후의 모든 Step에서 혼선 없이 재사용하도록 보장
+          echo "SUPABASE_PROJECT_REF=$REGULATED_REF" >> $GITHUB_ENV
 
       - name: Link Supabase & Check Remote DB State
         if: ${{ github.event_name == 'workflow_dispatch' && (github.event.inputs.apply_migrations == 'true' || github.event.inputs.mode == 'check_only') && (steps.migration_detect.outputs.changed == 'true' || github.event.inputs.force_migration_check == 'true') }}
@@ -163,10 +163,8 @@ jobs:
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
           SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+          SUPABASE_PROJECT_REF: ${{ env.SUPABASE_PROJECT_REF }}
         run: |
-          # SUPABASE_PROJECT_REF로 단일 정규화
-          export SUPABASE_PROJECT_REF="${{ secrets.SUPABASE_PROJECT_REF || secrets.SUPABASE_PROJECT_ID }}"
-          
           # 로그는 실제 project ref를 노출하지 않고 마스킹/안내 처리
           VERIFIED_MASKED_REF=$(echo "$SUPABASE_PROJECT_REF" | sed 's/./*/g' | cut -c1-12)...
           echo "Linking to Supabase project ref ($VERIFIED_MASKED_REF)"
@@ -302,6 +300,10 @@ jobs:
             if [ "${{ github.event.inputs.apply_migrations }}" = "true" ] && [ "${{ github.event.inputs.force_migration_check }}" = "true" ]; then
               echo "⚠️ **Database Update Triggered:** 양 옵션(\`apply_migrations\`, \`force_migration_check\`)이 모두 활성화되어 원격 라이브 Supabase 테이블 스키마에 대한 자동 마이그레이션 구성(DB Push)과 정적 계약 유지가 강제 실행되었습니다!" >> $GITHUB_STEP_SUMMARY
             fi
+
+            if [ "${{ github.event.inputs.skip_verification_for_hotfix }}" = "true" ]; then
+              echo "⚠️ **검증 생략 배포:** 핫픽스 목적의 검증 건너뛰기가 설정되어 E2E 검증 테스트(Gate)가 수행되지 않았습니다." >> $GITHUB_STEP_SUMMARY
+            fi
           fi
 
           echo "" >> $GITHUB_STEP_SUMMARY
@@ -323,7 +325,7 @@ jobs:
         run: npx playwright install chromium --with-deps
 
       - name: Run E2E Verification Tests (Gate)
-        if: ${{ (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.mode == 'deploy')) && !(github.event_name == 'workflow_dispatch' && github.event.inputs.skip_verification_for_hotfix == 'true') }}
+        if: ${{ (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.mode == 'deploy')) && (github.event_name != 'workflow_dispatch' || github.event.inputs.skip_verification_for_hotfix != 'true') }}
         run: pnpm run test:verify
         env:
           PUBLIC_ENABLE_STORED_EVALUATION: "true"
@@ -433,6 +435,7 @@ jobs:
   verify_oracle_assets:
     name: Verify Oracle Remote WASM Assets
     needs: build_and_deploy
+    if: ${{ always() }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     continue-on-error: true
