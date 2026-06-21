@@ -42,7 +42,7 @@ jobs:
           corepack prepare pnpm@11.5.2 --activate
 
       - name: Use Node 24
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: "24"
           cache: "pnpm"
