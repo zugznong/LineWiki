@@ -49,6 +49,80 @@ BEGIN
     missing_msg := missing_msg || ' research_documents.root_node_id column,';
   END IF;
 
+  -- 2.1. Check research_line_occurrences columns presence
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns 
+    WHERE table_schema = 'public' 
+      AND table_name = 'research_line_occurrences' 
+      AND column_name = 'position_node_id'
+  ) THEN
+    missing_msg := missing_msg || ' research_line_occurrences.position_node_id column,';
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns 
+    WHERE table_schema = 'public' 
+      AND table_name = 'research_line_occurrences' 
+      AND column_name = 'parent_occurrence_id'
+  ) THEN
+    missing_msg := missing_msg || ' research_line_occurrences.parent_occurrence_id column,';
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns 
+    WHERE table_schema = 'public' 
+      AND table_name = 'research_line_occurrences' 
+      AND column_name = 'move_uci'
+  ) THEN
+    missing_msg := missing_msg || ' research_line_occurrences.move_uci column,';
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns 
+    WHERE table_schema = 'public' 
+      AND table_name = 'research_line_occurrences' 
+      AND column_name = 'move_san'
+  ) THEN
+    missing_msg := missing_msg || ' research_line_occurrences.move_san column,';
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns 
+    WHERE table_schema = 'public' 
+      AND table_name = 'research_line_occurrences' 
+      AND column_name = 'path_uci'
+  ) THEN
+    missing_msg := missing_msg || ' research_line_occurrences.path_uci column,';
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns 
+    WHERE table_schema = 'public' 
+      AND table_name = 'research_line_occurrences' 
+      AND column_name = 'path_san'
+  ) THEN
+    missing_msg := missing_msg || ' research_line_occurrences.path_san column,';
+  END IF;
+
+  -- 2.2. Check research_move_edges columns presence
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns 
+    WHERE table_schema = 'public' 
+      AND table_name = 'research_move_edges' 
+      AND column_name = 'parent_occurrence_id'
+  ) THEN
+    missing_msg := missing_msg || ' research_move_edges.parent_occurrence_id column,';
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns 
+    WHERE table_schema = 'public' 
+      AND table_name = 'research_move_edges' 
+      AND column_name = 'child_occurrence_id'
+  ) THEN
+    missing_msg := missing_msg || ' research_move_edges.child_occurrence_id column,';
+  END IF;
+
   -- 3. Evaluate results
   IF missing_msg <> '' THEN
     RAISE EXCEPTION 'DATABASE CONTRACT BREACH: Missing objects: %', RTRIM(missing_msg, ',');

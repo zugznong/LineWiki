@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
     inputs:
       mode:
-        description: 'What should this workflow do?'
+        description: '실행 모드 선택 (deploy: 실제 빌드/배포 진행, check_only: Supabase DB 상태 및 마이그레이션 검증만 진행)'
         required: true
         default: 'deploy'
         type: choice
@@ -16,17 +16,17 @@ on:
           - deploy
           - check_only
       apply_migrations:
-        description: 'Apply target Supabase migrations? (Workflow-dispatch only)'
+        description: 'DB에 실제 마이그레이션을 적용할지 여부 (Whether to apply migrations to the live Supabase database. Set to true to execute db push, set to false for dry-run verification.)'
         required: false
         default: false
         type: boolean
       force_migration_check:
-        description: 'Force checking of migration files?'
+        description: '직전 커밋 diff에 migration 변경이 없어도 DB 적용/검증 단계를 강제로 실행할지 여부 (Force checking and applying migrations even if no migration changes are detected in git diff.)'
         required: false
         default: false
         type: boolean
       skip_verification_for_hotfix:
-        description: 'Skip E2E verification tests for hotfix? (Workflow-dispatch only)'
+        description: '핫픽스용 E2E 검증 테스트 건너뛰기 여부 (Skip E2E verification tests for hotfix? Workflow-dispatch only)'
         required: false
         default: false
         type: boolean
@@ -145,36 +145,95 @@ jobs:
           echo "::error::6. 녹색 'Run workflow' 버튼을 눌러 수동 배포를 새로 기동해 주시기 바랍니다."
           exit 1
 
-      - name: Warn on DB code changes without migrations
-        if: ${{ steps.migration_detect.outputs.changed == 'false' && steps.migration_detect.outputs.code_changed == 'true' }}
-        shell: bash
-        run: |
-          echo "::warning::DB communication code (adapters, ports, APIs, or researchStore) has been modified, but no new migrations under 'supabase/migrations/' were provided! Please ensure database tables and columns are already compatible with your code."
-
-      - name: Apply Database Migrations and Verify Schema Contract
-        if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.apply_migrations == 'true' && (steps.migration_detect.outputs.changed == 'true' || github.event.inputs.force_migration_check == 'true') }}
+      - name: Prep Credentials & Validate Migration Integrity
+        if: ${{ github.event_name == 'workflow_dispatch' && (github.event.inputs.apply_migrations == 'true' || github.event.inputs.mode == 'check_only') && (steps.migration_detect.outputs.changed == 'true' || github.event.inputs.force_migration_check == 'true') }}
         shell: bash
         run: |
           echo "=== 1. Validating migration integrity ==="
           node .github/ci/check-migration-integrity.mjs
 
-          echo "=== 2. Resolving credentials and linking Supabase ==="
           if [ -z "${{ secrets.SUPABASE_ACCESS_TOKEN }}" ] || [ -z "${{ secrets.SUPABASE_DB_PASSWORD }}" ] || { [ -z "${{ secrets.SUPABASE_PROJECT_REF }}" ] && [ -z "${{ secrets.SUPABASE_PROJECT_ID }}" ]; }; then
-            echo "::error::Supabase credentials (SUPABASE_ACCESS_TOKEN, SUPABASE_DB_PASSWORD, and SUPABASE_PROJECT_REF or SUPABASE_PROJECT_ID) are required for applying migrations!"
+            echo "::error::Supabase credentials (SUPABASE_ACCESS_TOKEN, SUPABASE_DB_PASSWORD, and SUPABASE_PROJECT_REF or SUPABASE_PROJECT_ID) are required!"
             exit 1
           fi
 
-          export SUPABASE_ACCESS_TOKEN="${{ secrets.SUPABASE_ACCESS_TOKEN }}"
+      - name: Link Supabase & Check Remote DB State
+        if: ${{ github.event_name == 'workflow_dispatch' && (github.event.inputs.apply_migrations == 'true' || github.event.inputs.mode == 'check_only') && (steps.migration_detect.outputs.changed == 'true' || github.event.inputs.force_migration_check == 'true') }}
+        shell: bash
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+        run: |
+          # SUPABASE_PROJECT_REF로 단일 정규화
           export SUPABASE_PROJECT_REF="${{ secrets.SUPABASE_PROJECT_REF || secrets.SUPABASE_PROJECT_ID }}"
           
-          echo "Linking to Supabase project with ref: $SUPABASE_PROJECT_REF"
-          npx supabase link --project-ref "$SUPABASE_PROJECT_REF" --password "${{ secrets.SUPABASE_DB_PASSWORD }}"
+          # 로그는 실제 project ref를 노출하지 않고 마스킹/안내 처리
+          VERIFIED_MASKED_REF=$(echo "$SUPABASE_PROJECT_REF" | sed 's/./*/g' | cut -c1-12)...
+          echo "Linking to Supabase project ref ($VERIFIED_MASKED_REF)"
+          
+          npx supabase link --project-ref "$SUPABASE_PROJECT_REF" --password "$SUPABASE_DB_PASSWORD"
+          
+          echo "=== 2. Remote DB status pre-check ==="
+          
+          QUERY_SQL="SELECT 
+            coalesce((SELECT exists (SELECT FROM pg_tables WHERE schemaname = 'supabase_migrations' AND tablename = 'schema_migrations')), false) as schema_migrations_exists,
+            coalesce((SELECT exists (SELECT FROM pg_tables WHERE schemaname = 'public' AND tablename = 'research_documents')), false) as research_documents_exists,
+            coalesce((SELECT exists (SELECT FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'research_documents' AND column_name = 'root_node_id')), false) as root_node_id_exists,
+            coalesce((SELECT count(*) FROM supabase_migrations.schema_migrations), 0) as migration_count;"
+          
+          DB_CHECK_JSON=$(npx supabase db query --password "$SUPABASE_DB_PASSWORD" "$QUERY_SQL" || echo "FAILED")
+          
+          if [ "$DB_CHECK_JSON" = "FAILED" ]; then
+            echo "::warning::Could not query remote database schema status. DB may be totally uninitialized or empty."
+          else
+            echo "Pre-check query execution completed successfully."
+            
+            SCH_EXISTS=$(echo "$DB_CHECK_JSON" | grep -o '"schema_migrations_exists":[^,}]*' | head -n 1 | cut -d':' -f2 | xargs || echo "false")
+            DOC_EXISTS=$(echo "$DB_CHECK_JSON" | grep -o '"research_documents_exists":[^,}]*' | head -n 1 | cut -d':' -f2 | xargs || echo "false")
+            MIG_COUNT=$(echo "$DB_CHECK_JSON" | grep -o '"migration_count":[^,}]*' | head -n 1 | cut -d':' -f2 | xargs || echo "0")
+            
+            echo "Detected state: [schema_migrations_exists=$SCH_EXISTS] [research_documents_exists=$DOC_EXISTS] [migration_count=$MIG_COUNT]"
+            
+            # "마이그레이션 히스토리는 비어 있는데 실제 테이블은 이미 존재하는 상태" 감지 시 차단
+            if [ "$DOC_EXISTS" = "true" ] && { [ "$SCH_EXISTS" = "false" ] || [ "$MIG_COUNT" = "0" ]; }; then
+              echo "::error::[안전 중단] 원격 데이터베이스 상태 사전 점검 에러!"
+              echo "::error::원격 라이브 DB에 핵심 테이블(research_documents)이 존재하지만 마이그레이션 적용 이력(supabase_migrations.schema_migrations)은 유실되거나 비어 있는 불일치 상태가 감지되었습니다."
+              echo "::error::자동으로 db push를 진행할 경우 기존 주석/연구 트리에 심각한 덮어쓰기 오작동이 일어날 물리적 위험이 가동됩니다."
+              echo "::error::이를 보존하기 위해 배포 파이프라인에서 자동 DB 갱신 적용을 전면 차단합니다."
+              echo "::error::수동으로 해당 DB를 점검하고 baseline 기준점 수립(bootstrap) 또는 migration repair_baseline을 정렬해 실행하십시오."
+              exit 1
+            fi
+            echo "Remote database schema sanity pre-check passed successfully."
+          fi
 
+      - name: Execute Supabase Database Push
+        if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.apply_migrations == 'true' && github.event.inputs.mode == 'deploy' && (steps.migration_detect.outputs.changed == 'true' || github.event.inputs.force_migration_check == 'true') }}
+        shell: bash
+        env:
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+        run: |
           echo "=== 3. Executing supabase db push ==="
-          npx supabase db push --password "${{ secrets.SUPABASE_DB_PASSWORD }}" --yes
+          npx supabase db push --password "$SUPABASE_DB_PASSWORD" --yes
 
+      - name: DB Push Warning / Skip Info
+        if: ${{ github.event_name == 'workflow_dispatch' && (steps.migration_detect.outputs.changed == 'true' || github.event.inputs.force_migration_check == 'true') && (github.event.inputs.apply_migrations == 'false' || github.event.inputs.mode == 'check_only') }}
+        shell: bash
+        run: |
+          echo "=== DB Push Skipped for Safety / Validation Only Mode ==="
+          if [ "${{ github.event.inputs.mode }}" = "check_only" ]; then
+            echo "Running in mode=check_only: Live push to target DB is strictly disabled. Schema verification only."
+          elif [ "${{ github.event.inputs.apply_migrations }}" = "false" ]; then
+            echo "apply_migrations is false. Remote live database update skipped."
+          fi
+
+      - name: Verify Database Schema Contract
+        if: ${{ github.event_name == 'workflow_dispatch' && (github.event.inputs.apply_migrations == 'true' || github.event.inputs.mode == 'check_only') && (steps.migration_detect.outputs.changed == 'true' || github.event.inputs.force_migration_check == 'true') }}
+        shell: bash
+        env:
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+        run: |
           echo "=== 4. Verifying database contracts ==="
-          if ! npx supabase db query --password "${{ secrets.SUPABASE_DB_PASSWORD }}" -f .github/ci/check-supabase-schema-contract.sql; then
+          if ! npx supabase db query --password "$SUPABASE_DB_PASSWORD" -f .github/ci/check-supabase-schema-contract.sql; then
             echo "::error::[계약 위반 배포 차단] 데이터베이스 스키마 계약 검증(schema contract)에 실패했습니다!"
             echo "::error::누락된 필수 테이블/컬럼이 감지되는 경우 다음과 같은 심각한 오작동이 발생합니다:"
             echo "::error::  - 'research_position_nodes' 테이블 누락 시: 오프닝 연구 트리 조회/삽입 요청 중 PostgREST 404 Not Found 혹은 API 게이트 누락 오류 발생"
@@ -185,7 +244,24 @@ jobs:
           fi
 
           echo "=== 5. Reloading PostgREST Schema Client ==="
-          npx supabase db query --password "${{ secrets.SUPABASE_DB_PASSWORD }}" "select pg_notify('pgrst', 'reload schema');"
+          npx supabase db query --password "$SUPABASE_DB_PASSWORD" "select pg_notify('pgrst', 'reload schema');"
+
+      - name: Generate Workflow Run Summary
+        if: always()
+        shell: bash
+        run: |
+          echo "### 🚀 Deployment & Migration Automation Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Trigger Intent Mode:** \`${{ github.event_name }}\`" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "- Mode Select: \`${{ github.event.inputs.mode }}\`" >> $GITHUB_STEP_SUMMARY
+            echo "- apply_migrations: \`${{ github.event.inputs.apply_migrations }}\`" >> $GITHUB_STEP_SUMMARY
+            echo "- force_migration_check: \`${{ github.event.inputs.force_migration_check }}\`" >> $GITHUB_STEP_SUMMARY
+            
+            if [ "${{ github.event.inputs.apply_migrations }}" = "true" ] && [ "${{ github.event.inputs.force_migration_check }}" = "true" ]; then
+              echo "⚠️ **Database Update Triggered:** 양 옵션(\`apply_migrations\`, \`force_migration_check\`)이 모두 활성화되어 원격 라이브 Supabase 테이블 스키마에 대한 자동 마이그레이션 구성(DB Push)과 정적 계약 유지가 강제 실행되었습니다!" >> $GITHUB_STEP_SUMMARY
+            fi
+          fi
 
       - name: Install Playwright Browsers with Deps
         if: ${{ github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.mode == 'deploy') }}
@@ -302,7 +378,6 @@ jobs:
   verify_oracle_assets:
     name: Verify Oracle Remote WASM Assets
     needs: build_and_deploy
-    if: needs.build_and_deploy.outputs.has_oracle_secrets == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     continue-on-error: true
