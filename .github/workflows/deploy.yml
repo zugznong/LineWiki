@@ -1,4 +1,4 @@
-name: Deploy to Cloudflare Pages & Verify Oracle Assets
+name: Deploy LineWiki: Supabase DB, Cloudflare Pages, Oracle Assets
 
 on:
   push:
@@ -206,6 +206,47 @@ jobs:
             echo "Remote database schema sanity pre-check passed successfully."
           fi
 
+      - name: Remote Drift Preflight Check
+        if: ${{ github.event_name == 'workflow_dispatch' && (github.event.inputs.apply_migrations == 'true' || github.event.inputs.mode == 'check_only') && (steps.migration_detect.outputs.changed == 'true' || github.event.inputs.force_migration_check == 'true') }}
+        shell: bash
+        env:
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+        run: |
+          echo "=== Remote Drift Preflight Check ==="
+          QUERY_SQL=$(cat .github/ci/check-supabase-remote-drift.sql)
+          DB_CHECK_JSON=$(npx supabase db query --password "$SUPABASE_DB_PASSWORD" "$QUERY_SQL" || echo "FAILED")
+          
+          if [ "$DB_CHECK_JSON" = "FAILED" ]; then
+            echo "::warning::Could not query remote database status for preflight check. It may be totally empty."
+          else
+            echo "Successfully retrieved remote schema health reports from database."
+            
+            # DRIFT_DETECTED 상태 단어가 잡히면 안전 정지 동작 개시
+            if echo "$DB_CHECK_JSON" | grep -q "DRIFT_DETECTED"; then
+              echo "::error::[안전 중단] 원격 드리프트 감지 (Remote Drift Detected)!"
+              echo "::error::원격 테이블이나 트리거가 이미 인프라 실체로 존재하지만, 마이그레이션 이력이 비어있습니다."
+              echo "::error::이 상태는 '원격 DB 객체는 존재하지만 migration history가 비어 있는 drift 상태'이므로 자동 push 대상이 아닙니다."
+              echo "::error::이대로 db push를 진행하여 0001 마이그레이션을 덮어쓰기하면 충돌로 인하여 기구성이 깨지므로 차단합니다."
+              
+              # GITHUB_STEP_SUMMARY 마크다운 지침 수록
+              echo "### ⚠️ 원격 DB 드리프트(Remote Drift) 감지됨" >> $GITHUB_STEP_SUMMARY
+              echo "원격 테이블이나 트리거는 이미 실체로서 존재하지만, 마이그레이션 이력이 유실되거나 비어있습니다." >> $GITHUB_STEP_SUMMARY
+              echo "충돌 방지를 위해 자동 배포 파이프라인에서 마이그레이션 자동 푸시(db push)가 안전하게 거부 및 고립되었습니다." >> $GITHUB_STEP_SUMMARY
+              echo "" >> $GITHUB_STEP_SUMMARY
+              echo "#### 🛠️ 문제 해결 가이드라인" >> $GITHUB_STEP_SUMMARY
+              echo "* **선택지 1: 빈 DB이거나 데이터 소실 위험이 없는 깨끗한 재생성 환경인 경우**" >> $GITHUB_STEP_SUMMARY
+              echo "  * 원격 DB의 기존 스키마를 날려 초기화(Reset)한 뒤 다시 마이그레이션을 정상 push할 수 있습니다." >> $GITHUB_STEP_SUMMARY
+              echo "  * 명령어 예시: \`npx supabase db reset --linked\` 또는 콘솔에서 공백 회수" >> $GITHUB_STEP_SUMMARY
+              echo "* **선택지 2: 기존 데이터 보존이 필수적이고 실 운영 상태인 경우**" >> $GITHUB_STEP_SUMMARY
+              echo "  * 실제 적재 데이터의 보전을 위해 schema contract를 자가 대조·검증하고, migration repair를 실행해 마이그레이션 baseline을 수동으로 공식 등록해 주어야 합니다." >> $GITHUB_STEP_SUMMARY
+              echo "  * 명령어 예시: \`npx supabase migration repair <migration_version> --status applied\`" >> $GITHUB_STEP_SUMMARY
+              echo "  * **경고**: baseline repair 및 수동 작업은 운영 데이터 보호를 위해 반드시 수동 승인 하에 실행되어야 하며, 자동화 스크립트로 즉시 실행할 수 없습니다." >> $GITHUB_STEP_SUMMARY
+              
+              exit 1
+            fi
+            echo "Remote Drift Preflight check passed successfully (No drift detected)."
+          fi
+
       - name: Execute Supabase Database Push
         if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.apply_migrations == 'true' && github.event.inputs.mode == 'deploy' && (steps.migration_detect.outputs.changed == 'true' || github.event.inputs.force_migration_check == 'true') }}
         shell: bash
@@ -262,6 +303,20 @@ jobs:
               echo "⚠️ **Database Update Triggered:** 양 옵션(\`apply_migrations\`, \`force_migration_check\`)이 모두 활성화되어 원격 라이브 Supabase 테이블 스키마에 대한 자동 마이그레이션 구성(DB Push)과 정적 계약 유지가 강제 실행되었습니다!" >> $GITHUB_STEP_SUMMARY
             fi
           fi
+
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 📊 Supabase Deployment & Migration System Flowchart" >> $GITHUB_STEP_SUMMARY
+          echo '```mermaid' >> $GITHUB_STEP_SUMMARY
+          echo 'graph TD' >> $GITHUB_STEP_SUMMARY
+          echo '    Step1[workflow_dispatch] --> Step2[apply_migrations 확인]' >> $GITHUB_STEP_SUMMARY
+          echo '    Step2 --> Step3[migration diff/force 확인]' >> $GITHUB_STEP_SUMMARY
+          echo '    Step3 --> Step4[integrity check]' >> $GITHUB_STEP_SUMMARY
+          echo '    Step4 --> Step5[remote drift preflight]' >> $GITHUB_STEP_SUMMARY
+          echo '    Step5 --> Step6[db push]' >> $GITHUB_STEP_SUMMARY
+          echo '    Step6 --> Step7[schema contract]' >> $GITHUB_STEP_SUMMARY
+          echo '    Step7 --> Step8[PostgREST reload]' >> $GITHUB_STEP_SUMMARY
+          echo '    Step8 --> Step9[Cloudflare build/deploy]' >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
 
       - name: Install Playwright Browsers with Deps
         if: ${{ github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.mode == 'deploy') }}
